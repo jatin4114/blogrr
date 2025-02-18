@@ -1,6 +1,6 @@
 # Blogrr - Modern Blogging Platform
 
-A full-stack blogging platform built with FastAPI backend and vanilla JavaScript frontend. Features a modern UI, real-time interactions, and secure authentication.
+A full-stack blogging platform built with FastAPI backend and Html css and JavaScript frontend. Features a modern UI, real-time interactions, and secure authentication.
 
 ## Project Overview
 
@@ -17,7 +17,7 @@ Blogrr is a complete blogging solution that allows users to create, manage, and 
 - Bcrypt (Password hashing)
 
 ### Frontend
-- Vanilla JavaScript
+- JavaScript
 - HTML5
 - CSS3 with modern features
 - Font Awesome icons
