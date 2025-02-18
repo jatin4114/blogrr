@@ -27,10 +27,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (menuToggle && navMenu) {
         menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent event bubbling
+            e.stopPropagation();
             isMenuOpen = !isMenuOpen;
             menuToggle.classList.toggle('active');
             navMenu.classList.toggle('show');
+            
+            // Reset rotation when menu is closed by other means
+            if (!isMenuOpen) {
+                menuToggle.classList.remove('active');
+            }
         });
 
         // Close menu when clicking outside
@@ -64,8 +69,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update this to match your actual FastAPI server URL and port
     const API_BASE_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:8000'
-        : 'https://api.blogrr.jatinpanghal.com'; 
-        'https://api-proxy.jatinpanghal007.workers.dev';
+        : 'http://localhost:8000';
+        
+        
 
     // Define all functions first
     async function deleteBlog(blogId) {
@@ -939,6 +945,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add this function to handle blog expansion
     function openBlogModal(blog) {
+        // Only hide menu toggle on mobile
+        const menuToggle = document.getElementById('menu-toggle');
+        if (menuToggle && window.innerWidth <= 768) {
+            menuToggle.style.display = 'none';
+        }
+
         const comments = blog.comments || [];
         const modal = document.createElement('div');
         modal.className = 'blog-modal';
@@ -1006,7 +1018,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const closeBtn = modal.querySelector('.close-modal');
         closeBtn.onclick = () => {
             modal.classList.remove('active');
-            setTimeout(() => modal.remove(), 300);
+            setTimeout(() => {
+                modal.remove();
+                // Only show menu toggle on mobile when closing
+                if (menuToggle && window.innerWidth <= 768) {
+                    menuToggle.style.display = 'flex';
+                }
+            }, 300);
         };
 
         // Close on escape key

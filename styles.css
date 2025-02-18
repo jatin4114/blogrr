@@ -2051,19 +2051,24 @@ body::after {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.menu-toggle:hover {
-    background: var(--secondary-color);
-    transform: scale(1.1);
+/* Icon transition */
+.menu-toggle i {
+    transition: transform 0.3s ease;
+    transform: rotate(0deg); /* Initial state - closed */
 }
 
+/* Active state - when menu is open */
 .menu-toggle.active {
-    background: var(--secondary-color);
+    background: #7645eb;  /* Add this line for white background when open */
+    color: rgb(255, 255, 255);
     transform: rotate(90deg);
 }
+
+/* Hover effect */
+
 
 /* Navigation Menu Styles */
 .nav-menu {
@@ -2211,8 +2216,9 @@ body::after {
 }
 
 .menu-toggle:hover {
-    color: var(--primary-color);
-    transform: rotate(90deg);
+    color: #000000;
+    transform: rotate(0deg);
+    
 }
 
 .menu-toggle.active {
