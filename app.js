@@ -67,12 +67,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Update this to match your actual FastAPI server URL and port
-    const API_BASE_URL = window.location.hostname === 'localhost' 
+    const API_BASE_URL = window.location.hostname === 'localhost'
         ? 'http://localhost:8000'
-        : 'https://api.blogrr.jatinpanghal.com';
-        : 'https://api-proxy.jatinpanghal007.workers.dev/';
-        
-        
+        : window.location.hostname === 'blogrr.jatinpanghal.com'
+            ? 'https://api.blogrr.jatinpanghal.com'
+            : 'https://api-proxy.jatinpanghal007.workers.dev';
 
     // Define all functions first
     async function deleteBlog(blogId) {
