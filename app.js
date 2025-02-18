@@ -69,7 +69,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update this to match your actual FastAPI server URL and port
     const API_BASE_URL = window.location.hostname === 'localhost' 
         ? 'http://localhost:8000'
-        : 'http://localhost:8000';
+        : 'https://api.blogrr.jatinpanghal.com';
+        : 'https://api-proxy.jatinpanghal007.workers.dev/';
         
         
 
