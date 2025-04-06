@@ -1,0 +1,132 @@
+.blogs-container {
+  margin-top: 1rem;
+  min-height: calc(100vh - 120px);
+  transition: opacity 0.3s ease;
+  opacity: 1;
+}
+
+/* Simple fade transition controlled by parent component */
+.blogs-container.fade-transition {
+  opacity: 0;
+}
+
+.blogs-container h2 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-size: 2rem;
+  height: 2.5rem;
+}
+
+.blogs-subtitle {
+  text-align: center;
+  color: var(--text-color);
+  opacity: 0.8;
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  font-style: italic;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  transition: opacity 1s ease-out, height 1s ease-out 0.5s; /* Added transition for smooth fadeout */
+}
+
+/* New class for fading out the subtitle */
+.blogs-subtitle.fade-out {
+  opacity: 0;
+  height: 0;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.blogs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  width: 100%;
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.3s ease-out;
+}
+
+.loading-blogs {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+.no-blogs-message {
+  text-align: center;
+  grid-column: 1 / -1;
+  padding: 3rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  color: var(--text-color);
+  font-size: 1.1rem;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.no-blogs-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.no-blogs-icon i {
+  font-size: 2rem;
+  color: white;
+}
+
+.start-writing-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.start-writing-btn:hover {
+  background: var(--secondary-color);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+  .blogs-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .blogs-container h2 {
+    font-size: 1.8rem;
+    height: 2.2rem;
+  }
+  
+  .blogs-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}

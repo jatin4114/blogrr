@@ -1,0 +1,512 @@
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex: 1;
+  position: relative; /* Add this to establish positioning context */
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(129, 140, 248, 0.1);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  margin-left: 1rem;
+  border: 1px solid rgba(129, 140, 248, 0.2);
+}
+
+.user-info i {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+.user-info span {
+  color: var(--text-color);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: none; /* Show full username on desktop */
+}
+
+/* Navigation links */
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  flex: 2;
+  justify-content: flex-end;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  transform: translateX(-50%);
+  transition: width 0.3s ease;
+}
+
+.nav-btn:hover::before {
+  width: 80%;
+}
+
+.nav-btn.active {
+  background: var(--primary-color);
+  color: white;
+  pointer-events: none; /* This prevents clicking on active tab */
+  box-shadow: 0 4px 8px rgba(var(--primary-color-rgb), 0.3);
+}
+
+.nav-btn.active::before {
+  width: 100%;
+}
+
+.nav-menu .nav-btn.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Remove the settings-btn styles and add user menu toggle styles */
+.user-menu-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: none; /* Hide by default (mobile only) */
+}
+
+.user-menu-toggle:hover {
+  transform: scale(1.1);
+  color: var(--primary-color);
+}
+
+/* User Menu Panel (For mobile) */
+.user-menu {
+  position: fixed;
+  top: 60px; /* Just below the topbar */
+  right: 1rem;
+  width: 250px;
+  max-width: calc(100vw - 2rem); /* Prevent horizontal overflow */
+  max-height: calc(100vh - 80px); /* Prevent vertical overflow */
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  z-index: 1200;
+  overflow-y: auto; /* Allow scrolling if content is tall */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
+  animation: fadeIn 0.3s ease;
+}
+
+.user-menu-header {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 0; /* Keep header visible when scrolling */
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.user-details {
+  flex: 1;
+  min-width: 0; /* Allow proper text truncation */
+}
+
+.user-details h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: normal; /* Allow text to wrap to next line */
+  word-break: break-word; /* Break long words if needed */
+  max-width: 100%; /* Ensure text stays within container */
+  overflow-wrap: break-word;
+}
+
+.user-details p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.user-menu-actions {
+  padding: 0.75rem;
+}
+
+.user-menu-actions button {
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-color);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.user-menu-actions button:hover {
+  background: rgba(var(--primary-color-rgb), 0.1);
+}
+
+/* Style logout button in user menu to match desktop */
+.user-menu-actions button:last-child:hover {
+  background: rgba(var(--error-color-rgb), 0.1);
+  color: var(--error-color);
+}
+
+.user-menu-actions button:last-child:hover i {
+  color: var(--error-color);
+}
+
+/* Desktop logout button styles (in nav-links) */
+.logout-btn:hover {
+  background: rgba(var(--error-color-rgb), 0.1);
+  color: var(--error-color);
+}
+
+.logout-btn:hover i {
+  color: var(--error-color);
+}
+
+/* Settings panel styles */
+.settings-panel {
+  display: none;
+}
+
+.close-settings {
+  display: none;
+}
+
+.settings-logout-btn {
+  display: none;
+}
+
+/* Mobile menu */
+.menu-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1001;
+  background: #009688; /* Changed background color to teal */
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Icon transition */
+.menu-toggle i {
+  transition: transform 0.3s ease;
+  transform: rotate(0deg); /* Initial state - closed */
+}
+
+/* Active state - when menu is open */
+.menu-toggle.active {
+  background: #ff9800; /* Changed active background to orange */
+  color: rgb(255, 255, 255);
+  transform: rotate(90deg);
+}
+
+/* Hover effect */
+.menu-toggle:hover {
+  filter: brightness(90%); /* Slightly darken on hover */
+}
+
+.nav-menu {
+  display: none;
+  position: fixed;
+  top: 0;
+  right: -300px;
+  height: 100vh;
+  width: 300px;
+  background: white;
+  z-index: 1000;
+  transition: right 0.3s ease;
+  box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.nav-menu.show {
+  right: 0;
+}
+
+.nav-menu::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: -1;
+}
+
+.nav-menu.show::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-close {
+  background: transparent;
+  border: none;
+  color: #333;  /* Updated close button color */
+  font-size: 1.8rem;
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1010;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.menu-close:hover {
+  color: #7645eb;
+}
+
+/* Message badge for unread messages */
+.message-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background-color: var(--error-color, #ef4444);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+}
+
+.mobile-message-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--error-color, #ef4444);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: bold;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+}
+
+/* Menu items for mobile view */
+.user-menu-items {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+}
+
+.user-menu-items button {
+  width: 100%;
+  padding: 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-color);
+  font-size: 1rem;
+  text-align: left;
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.user-menu-items button:hover {
+  background: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.user-menu-items button.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* Media queries */
+@media (max-width: 1024px) {
+  /* For medium screens, limit username length */
+  .user-info span {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 1rem;
+  }
+  
+  .nav-brand {
+    font-size: 1.3rem;
+  }
+
+  .topbar .nav-links {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .nav-menu {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    right: -300px;
+    height: calc(100vh);
+    width: 300px;
+    background: white;
+    z-index: 1000;
+    transition: right 0.3s ease;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+    padding-top: 4rem;
+  }
+
+  .nav-menu.show {
+    right: 0;
+  }
+
+  .nav-menu .nav-links {
+    margin-top: 1rem;  /* Items moved to top */
+    padding: 1rem 1rem 0;
+    flex-direction: column;
+    gap: 0.5rem;
+    display: flex;
+    width: 100%;
+  }
+
+  .nav-menu .nav-btn {
+    width: 100%;
+    text-align: left;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    border-bottom: 1px solid #eee;
+    color: #333;  /* Updated text color for menu items */
+  }
+
+  .user-info {
+    display: none; /* Hide entire user info section including icon */
+  }
+
+  .user-menu-toggle {
+    display: block;
+  }
+
+  .user-menu-header {
+    padding: 1rem;
+  }
+  
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+  
+  .user-details h4 {
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+  
+  .user-details p {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 0.75rem 1rem;
+  }
+  
+  .nav-brand {
+    font-size: 1.2rem;
+  }
+}
+@media (min-width: 769px) {
+  .nav-menu {
+    display: none;
+  }
+}
