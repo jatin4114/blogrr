@@ -5,12 +5,14 @@ from app.services.websocket_service import manager
 from app.services.chat_messages_service import store_message, get_undelivered_messages, mark_messages_as_delivered
 from app.schemas.chat_message_schema import ChatMessageSchema
 from app.db.models.users import User
-from app.core.auth import get_current_user 
+from app.core.auth import get_current_user, verify_token, SECRET_KEY, ALGORITHM
+from jose import JWTError, jwt
 import logging
 from datetime import datetime
 import traceback
 from sqlalchemy import or_, and_
 from app.db.models.chat_messages import ChatMessage
+from typing import Optional
 
 # Import tasks in a way that doesn't fail if celery is not available
 try:
@@ -412,3 +414,32 @@ async def get_unread_count(
         logger.error(f"Error getting unread message count: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Failed to get unread message count: {str(e)}")
+
+async def get_user_from_token(token: str, db: Session) -> Optional[User]:
+    """
+    Validate token and get the corresponding user
+    """
+    try:
+        if not verify_token(token):
+            logger.warning("Token verification failed")
+            return None
+            
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            logger.warning("No sub claim in token")
+            return None
+        
+        # Find user by email or username for flexibility
+        user = db.query(User).filter(User.email == username).first()
+        if not user:
+            user = db.query(User).filter(User.username == username).first()
+            
+        return user
+    except JWTError as e:
+        logger.error(f"JWT error: {str(e)}")
+        return None
+    except Exception as e:
+        logger.error(f"Token validation error: {str(e)}")
+        return None
+
