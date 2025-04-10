@@ -57,11 +57,11 @@ const Topbar = ({
   };
 
   const handleChatClick = () => {
-    if (currentView !== 'chat' && onChatClick) {
-      onChatClick();
-      setShowUserMenu(false);
+    if (currentView !== 'chat') {
+      if (onChatClick) onChatClick(); // optional side effect
+      navigate('/chats');
     }
-  };
+  }
 
   return (
     <>
@@ -92,24 +92,23 @@ const Topbar = ({
               <i className="fas fa-user-circle"></i> My Profile
             </button>
           </li>
-          {onChatClick && (
-            <li>
-              <button 
-                className={`nav-btn ${currentView === 'chat' ? 'active' : ''}`} 
-                onClick={handleChatClick}
-              >
-                <i className="fas fa-comments"></i> Chat
-                {unreadMessageCount > 0 && (
-                  <span className="message-badge">{unreadMessageCount}</span>
-                )}
-              </button>
-            </li>
-          )}
+          <li>
+          <button 
+              className={currentView === 'chat' ? 'active' : ''}
+              onClick={() => { setShowUserMenu(false); handleChatClick(); }}
+            >
+              <i className="fas fa-comments"></i> Chat
+              {unreadMessageCount > 0 && (
+                <span className="message-badge">{unreadMessageCount}</span>
+              )}
+            </button>
+          </li>
           <li>
             <button className="nav-btn logout-btn" onClick={onLogout}>
               <i className="fas fa-sign-out-alt"></i> Logout
             </button>
           </li>
+          
         </ul>
 
         {/* Mobile User Menu Toggle Button */}

@@ -1,15 +1,21 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from 'features/auth/store/authSlice';
 import blogsReducer from 'features/blogs/store/blogSlice';
-import chatReducer from 'features/chats/store/chatSlice';
+import { ChatReducers } from 'features/chats/store/Index';
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     blogs: blogsReducer,
-    chat: chatReducer
+    ...ChatReducers
   }
 });
 
+// Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+// Use throughout your app instead of plain `useDispatch` and `useSelector`
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;

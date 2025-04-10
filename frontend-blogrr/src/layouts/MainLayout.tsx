@@ -13,10 +13,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
-  const { unreadCount } = useSelector((state: RootState) => ({
-    unreadCount: state.chat.contacts.reduce((sum, contact) => sum + contact.unreadCount, 0) +
-                 state.chat.groups.reduce((sum, group) => sum + group.unreadCount, 0)
-  }));
+  
+
+  
 
   const handleLogout = () => {
     dispatch(logout());
@@ -40,7 +39,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         onExploreClick={() => navigate('/blogs')}
         onProfileClick={() => navigate('/my-blogs')}
         onChatClick={() => navigate('/chats')}
-        unreadMessageCount={unreadCount}
+        
         currentView={'explore'}
       />
       

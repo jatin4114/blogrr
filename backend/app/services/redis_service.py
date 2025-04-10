@@ -2,7 +2,9 @@ import os
 import json
 import logging
 import redis
-from typing import Dict, Any, List, Optional
+import traceback
+from typing import Dict, Any, Union, List, Optional
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -62,4 +64,339 @@ class RedisService:
             return True
         except Exception as e:
             logger.error(f"Error removing user from active group: {str(e)}")
+            return False
+    
+    def set_user_presence(self, user_id: int, status: str) -> bool:
+        """Set a user's presence status"""
+        try:
+            key = f"user_presence:{user_id}"
+            self.redis_client.set(key, status)
+            self.redis_client.expire(key, 1800)  # 30 minutes
+            return True
+        except Exception as e:
+            logger.error(f"Error setting user presence: {str(e)}")
+            return False
+    
+    def get_user_presence(self, user_id: int) -> Optional[str]:
+        """Get a user's presence status"""
+        try:
+            key = f"user_presence:{user_id}"
+            status = self.redis_client.get(key)
+            return status
+        except Exception as e:
+            logger.error(f"Error getting user presence: {str(e)}")
+            return None
+    
+    def get_user_presences(self, user_ids: List[int]) -> Dict[int, str]:
+        """Get presence status for multiple users at once"""
+        results = {}
+        try:
+            pipe = self.redis_client.pipeline()
+            keys = [f"user_presence:{user_id}" for user_id in user_ids]
+            for key in keys:
+                pipe.get(key)
+            statuses = pipe.execute()
+            for i, user_id in enumerate(user_ids):
+                results[user_id] = statuses[i]
+            return results
+        except Exception as e:
+            logger.error(f"Error getting user presences: {str(e)}")
+            return results
+    
+    def add_pending_notification(self, user_id: int, notification_type: str, data: Dict[str, Any]) -> bool:
+        """Add a pending notification for a user to be delivered when they reconnect"""
+        try:
+            key = f"pending_notifications:{user_id}"
+            if "timestamp" not in data:
+                data["timestamp"] = datetime.utcnow().isoformat()
+            data["type"] = notification_type
+            notification_json = json.dumps(data)
+            self.redis_client.lpush(key, notification_json)
+            self.redis_client.expire(key, 604800)  # 1 week
+            return True
+        except Exception as e:
+            logger.error(f"Error adding pending notification: {str(e)}")
+            return False
+    
+    def get_pending_notifications(self, user_id: int) -> List[Dict[str, Any]]:
+        """Get all pending notifications for a user and clear them"""
+        try:
+            key = f"pending_notifications:{user_id}"
+            pipe = self.redis_client.pipeline()
+            pipe.lrange(key, 0, -1)
+            pipe.delete(key)
+            results = pipe.execute()
+            raw_notifications = results[0] if results and len(results) > 0 else []
+            notifications = []
+            for notification_json in raw_notifications:
+                try:
+                    notification = json.loads(notification_json)
+                    notifications.append(notification)
+                except json.JSONDecodeError:
+                    logger.error(f"Invalid JSON in notification: {notification_json}")
+            return notifications
+        except Exception as e:
+            logger.error(f"Error getting pending notifications: {str(e)}")
+            return []
+    
+    def set_typing_indicator(self, chat_type: str, chat_id: Union[int, str], user_id: int) -> bool:
+        """Set typing indicator with expiration (expires after 5 seconds)"""
+        try:
+            key = f"typing:{chat_type}:{chat_id}:{user_id}"
+            self.redis_client.set(key, "1", ex=5)
+            set_key = f"typing:{chat_type}:{chat_id}"
+            self.redis_client.sadd(set_key, user_id)
+            self.redis_client.expire(set_key, 60)
+            return True
+        except Exception as e:
+            logger.error(f"Error setting typing indicator: {str(e)}")
+            return False
+    
+    def clear_typing_indicator(self, chat_type: str, chat_id: Union[int, str], user_id: int) -> bool:
+        """Clear typing indicator"""
+        try:
+            key = f"typing:{chat_type}:{chat_id}:{user_id}"
+            self.redis_client.delete(key)
+            set_key = f"typing:{chat_type}:{chat_id}"
+            self.redis_client.srem(set_key, user_id)
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing typing indicator: {str(e)}")
+            return False
+    
+    def get_typing_users(self, chat_type: str, chat_id: Union[int, str]) -> List[int]:
+        """Get list of users currently typing in a specific chat"""
+        try:
+            set_key = f"typing:{chat_type}:{chat_id}"
+            raw_users = self.redis_client.smembers(set_key)
+            typing_users = []
+            for user_str in raw_users:
+                try:
+                    typing_users.append(int(user_str))
+                except ValueError:
+                    logger.warning(f"Invalid user ID in typing set: {user_str}")
+            return typing_users
+        except Exception as e:
+            logger.error(f"Error getting typing users: {str(e)}")
+            return []
+    
+    def set_user_connection(self, user_id: int, server_id: str) -> bool:
+        """Track which server a user is connected to (for cross-server messaging)"""
+        try:
+            key = f"connected:{user_id}"
+            self.redis_client.set(key, server_id)
+            self.redis_client.sadd("connected:users", user_id)
+            self.redis_client.expire(key, 1800)
+            return True
+        except Exception as e:
+            logger.error(f"Error setting user connection: {str(e)}")
+            return False
+    
+    def remove_user_connection(self, user_id: int) -> bool:
+        """Remove a user's connection tracking"""
+        try:
+            key = f"connected:{user_id}"
+            self.redis_client.delete(key)
+            self.redis_client.srem("connected:users", user_id)
+            return True
+        except Exception as e:
+            logger.error(f"Error removing user connection: {str(e)}")
+            return False
+    
+    def is_user_connected(self, user_id: int) -> bool:
+        """Check if a user is connected to any server"""
+        try:
+            key = f"connected:{user_id}"
+            return bool(self.redis_client.exists(key))
+        except Exception as e:
+            logger.error(f"Error checking if user is connected: {str(e)}")
+            return False
+    
+    def get_user_server(self, user_id: int) -> Optional[str]:
+        """Get the server ID that a user is connected to"""
+        try:
+            key = f"connected:{user_id}"
+            server_id = self.redis_client.get(key)
+            return server_id
+        except Exception as e:
+            logger.error(f"Error getting user server: {str(e)}")
+            return None
+    
+    def update_heartbeat(self, user_id: int) -> bool:
+        """Update user's heartbeat (activity timestamp)"""
+        try:
+            key = f"heartbeat:{user_id}"
+            timestamp = datetime.utcnow().timestamp()
+            self.redis_client.set(key, str(timestamp))
+            self.redis_client.expire(key, 300)
+            return True
+        except Exception as e:
+            logger.error(f"Error updating heartbeat: {str(e)}")
+            return False
+    
+    def get_inactive_users(self, cutoff_minutes: int = 5) -> List[int]:
+        """Get users who haven't sent a heartbeat in the specified time"""
+        try:
+            users = self.redis_client.smembers("connected:users")
+            inactive_users = []
+            cutoff_time = (datetime.utcnow() - timedelta(minutes=cutoff_minutes)).timestamp()
+            for user_str in users:
+                try:
+                    user_id = int(user_str)
+                    key = f"heartbeat:{user_id}"
+                    last_heartbeat = self.redis_client.get(key)
+                    if not last_heartbeat or float(last_heartbeat) < cutoff_time:
+                        inactive_users.append(user_id)
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid user data: {user_str}")
+            return inactive_users
+        except Exception as e:
+            logger.error(f"Error getting inactive users: {str(e)}")
+            return []
+    
+    def store_message_delivery_status(self, message_id: str, user_id: int, status: str) -> bool:
+        """Store message delivery status (sent, delivered, read)"""
+        try:
+            key = f"message:status:{message_id}:{user_id}"
+            data = {
+                "status": status,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            self.redis_client.set(key, json.dumps(data))
+            self.redis_client.expire(key, 2592000)  # 30 days
+            return True
+        except Exception as e:
+            logger.error(f"Error storing message delivery status: {str(e)}")
+            return False
+    
+    def get_message_delivery_status(self, message_id: str, user_id: int) -> Optional[Dict]:
+        """Get message delivery status"""
+        try:
+            key = f"message:status:{message_id}:{user_id}"
+            status_json = self.redis_client.get(key)
+            if status_json:
+                return json.loads(status_json)
+            return None
+        except Exception as e:
+            logger.error(f"Error getting message delivery status: {str(e)}")
+            return None
+    
+    def store_time_sync(self, user_id: int, client_time: float, server_time: float) -> bool:
+        """Store time synchronization data for a user"""
+        try:
+            key = f"time_sync:{user_id}"
+            data = {
+                "client_time": client_time,
+                "server_time": server_time,
+                "offset": server_time - client_time
+            }
+            self.redis_client.set(key, json.dumps(data))
+            self.redis_client.expire(key, 86400)  # 24 hours
+            return True
+        except Exception as e:
+            logger.error(f"Error storing time sync: {str(e)}")
+            return False
+    
+    def get_server_time_offset(self, user_id: int) -> Optional[float]:
+        """Get the time offset between server and client for a user"""
+        try:
+            key = f"time_sync:{user_id}"
+            data_json = self.redis_client.get(key)
+            if data_json:
+                data = json.loads(data_json)
+                return data.get("offset")
+            return None
+        except Exception as e:
+            logger.error(f"Error getting server time offset: {str(e)}")
+            return None
+    
+    def add_user_to_channel(self, channel: str, user_id: int) -> bool:
+        """Add a user to a channel subscription list"""
+        try:
+            key = f"channel:subscribers:{channel}"
+            self.redis_client.sadd(key, user_id)
+            user_channels_key = f"user:channels:{user_id}"
+            self.redis_client.sadd(user_channels_key, channel)
+            self.redis_client.expire(key, 86400)  # 24 hours
+            self.redis_client.expire(user_channels_key, 86400)  # 24 hours
+            return True
+        except Exception as e:
+            logger.error(f"Error adding user to channel: {str(e)}")
+            return False
+    
+    def remove_user_from_channel(self, channel: str, user_id: int) -> bool:
+        """Remove a user from a channel subscription list"""
+        try:
+            key = f"channel:subscribers:{channel}"
+            self.redis_client.srem(key, user_id)
+            user_channels_key = f"user:channels:{user_id}"
+            self.redis_client.srem(user_channels_key, channel)
+            return True
+        except Exception as e:
+            logger.error(f"Error removing user from channel: {str(e)}")
+            return False
+    
+    def get_channel_subscribers(self, channel: str) -> List[int]:
+        """Get all users subscribed to a channel"""
+        try:
+            key = f"channel:subscribers:{channel}"
+            raw_subscribers = self.redis_client.smembers(key)
+            return [int(user_id) for user_id in raw_subscribers]
+        except Exception as e:
+            logger.error(f"Error getting channel subscribers: {str(e)}")
+            return []
+    
+    def get_user_channels(self, user_id: int) -> List[str]:
+        """Get all channels a user is subscribed to"""
+        try:
+            channels = []
+            cursor = 0
+            pattern = "channel:subscribers:*"
+            while True:
+                cursor, keys = self.redis_client.scan(cursor, pattern, 100)
+                for key in keys:
+                    channel = key.replace("channel:subscribers:", "")
+                    if self.redis_client.sismember(key, user_id):
+                        channels.append(channel)
+                if cursor == 0:
+                    break
+            return channels
+        except Exception as e:
+            logger.error(f"Error getting user channels: {str(e)}")
+            return []
+    
+    def clear_all_user_data(self, user_id: int) -> bool:
+        """Clear all Redis data for a user when they log out"""
+        try:
+            keys_to_delete = []
+            for pattern in [
+                f"user_presence:{user_id}",
+                f"connected:{user_id}",
+                f"heartbeat:{user_id}",
+                f"pending_notifications:{user_id}",
+                f"time_sync:{user_id}"
+            ]:
+                keys_to_delete.append(pattern)
+            cursor = 0
+            pattern = f"typing:*:{user_id}"
+            while True:
+                cursor, keys = self.redis_client.scan(cursor, pattern, 100)
+                keys_to_delete.extend(keys)
+                if cursor == 0:
+                    break
+            if keys_to_delete:
+                self.redis_client.delete(*keys_to_delete)
+            self.redis_client.srem("connected:users", user_id)
+            cursor = 0
+            pattern = "typing:*"
+            while True:
+                cursor, keys = self.redis_client.scan(cursor, pattern, 100)
+                for key in keys:
+                    if self.redis_client.sismember(key, user_id):
+                        self.redis_client.srem(key, user_id)
+                if cursor == 0:
+                    break
+            return True
+        except Exception as e:
+            logger.error(f"Error clearing user data: {str(e)}")
             return False

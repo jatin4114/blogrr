@@ -39,7 +39,7 @@ app.add_middleware(
 # app.add_middleware(HTTPSRedirectMiddleware)
 
 # Import routers
-from app.api.endpoints import users, blog_posts, chat_messages, group_chats
+from app.api.endpoints import users, blog_posts, chat_messages, group_chats, multiplexer
 
 # Include routers
 app.include_router(users.router, prefix="/users", tags=["Users"])
@@ -47,6 +47,7 @@ app.include_router(blog_posts.router, prefix="/blogs", tags=["Blogs"])
 app.include_router(post_comments.router, prefix="/comments", tags=["Comments"])
 app.include_router(chat_messages.router, tags=["Chat"])
 app.include_router(group_chats.router, prefix="/chat", tags=["Group Chat"])
+app.include_router(multiplexer.router, tags=["WebSocket Multiplexer"])
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -222,8 +223,8 @@ async def favicon():
     favicon_path = "app/static/favicon.ico"
     
     # If favicon doesn't exist, return an empty response
+    from fastapi.responses import Response
     if not os.path.exists(favicon_path):
-        from fastapi.responses import Response
         return Response(content=b"", media_type="image/x-icon")
         
     return FileResponse(favicon_path)

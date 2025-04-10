@@ -171,13 +171,23 @@ async def send_group_message(
                 "message": message_data.message
             }
             task = store_group_message_task.delay(task_data)
+            # The result of store_group_message_task is now the actual message ID
             return JSONResponse(status_code=202, content={
                 "message": "Message queued for delivery",
-                "task_id": task.id
+                "task_id": task.id,
+                "info": "Message processing in progress"
             })
         else:
             # Direct database storage
             stored_message = store_group_message(db, message_data, current_user.id)
+            # Manually trigger notification for offline members
+            if stored_message:
+                try:
+                    # Pass the actual database message ID
+                    message_id = stored_message.id
+                    notify_offline_members_task.delay(group_id, message_id)
+                except Exception as e:
+                    logger.error(f"Failed to notify offline members: {str(e)}")
             return stored_message
     except HTTPException as he:
         raise he
@@ -336,7 +346,9 @@ async def group_websocket_endpoint(
                         }
                         # Send to Celery for processing
                         task = store_group_message_task.delay(task_data)
-                        message_id = task.id
+                        # The task ID is not the message ID, so we can't use it directly
+                        # Just send a placeholder ID for confirmation
+                        message_id = "pending"  # We don't know the real ID yet
                     else:
                         # Direct DB storage if Celery isn't available
                         stored_message = store_group_message(db, message_schema, user_id)

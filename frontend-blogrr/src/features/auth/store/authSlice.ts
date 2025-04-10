@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { chatSocketService } from 'features/chats/services/chatSocketService';
-import { groupChatSocketService } from 'features/chats/services/groupChatSocketService';
+// Replace AuthService import with tokenUtils helpers
+import { getAuthHeader, loadAuthData, storeAuthData, clearAuthData } from '../utils/tokenUtils';
 
 interface User {
   id: number;
@@ -23,19 +23,14 @@ const loadAuthFromStorage = (): {
   token: string | null;
   isAuthenticated: boolean;
 } => {
-  const token = localStorage.getItem('token');
-  const userIdStr = localStorage.getItem('userId');
-  const username = localStorage.getItem('username');
-  
-  if (token && userIdStr && username) {
-    const userId = parseInt(userIdStr);
+  const { token, userId, username } = loadAuthData();
+  if (token && userId && username) {
     return {
       token,
-      user: { id: userId, username },
+      user: { id: parseInt(userId, 10), username },
       isAuthenticated: true
     };
   }
-  
   return { user: null, token: null, isAuthenticated: false };
 };
 
@@ -142,7 +137,7 @@ export const initiateGoogleLogin = createAsyncThunk(
   }
 );
 
-// Load initial state from localStorage
+// Load initial state from localStorage using loadAuthFromStorage
 const { user, token, isAuthenticated } = loadAuthFromStorage();
 
 // Slice
@@ -157,16 +152,8 @@ const authSlice = createSlice({
   } as AuthState,
   reducers: {
     logout: (state) => {
-      // Disconnect WebSockets
-      chatSocketService.disconnect();
-      groupChatSocketService.disconnectAll();
-      
-      // Clear localStorage
-      localStorage.removeItem('token');
-      localStorage.removeItem('userId');
-      localStorage.removeItem('username');
-      
-      // Reset state
+      // Use tokenUtils to clear auth data
+      clearAuthData();
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -188,7 +175,6 @@ const authSlice = createSlice({
         console.log('- User ID:', userId);
         console.log('- Username:', username);
         
-        // Validate parameters before storing
         if (!accessToken || accessToken.length < 10) {
           throw new Error('Invalid access token received');
         }
@@ -201,19 +187,11 @@ const authSlice = createSlice({
           throw new Error('Invalid username received');
         }
         
-        // Store in localStorage
-        localStorage.setItem('token', accessToken);
-        localStorage.setItem('userId', userId);
-        localStorage.setItem('username', username);
+        // Store auth data using tokenUtils
+        storeAuthData(accessToken, userId, username);
         
-        // Initialize chat connections
-        const userIdInt = safeParseInt(userId);
-        chatSocketService.connect(userIdInt);
-        groupChatSocketService.setUserId(userIdInt);
-        
-        // Update state
         state.token = accessToken;
-        state.user = { id: userIdInt, username };
+        state.user = { id: safeParseInt(userId), username };
         state.isAuthenticated = true;
         state.loading = false;
         state.error = null;
@@ -221,7 +199,6 @@ const authSlice = createSlice({
         console.log('OAuth login complete, user is now authenticated:', username);
       } catch (error) {
         console.error('Error in handleOAuthCallback:', error);
-        // Still try to keep the user logged in if possible
         if (accessToken && userId && username) {
           state.isAuthenticated = true;
           state.user = { id: safeParseInt(userId), username };
@@ -246,15 +223,12 @@ const authSlice = createSlice({
           username: action.payload.username
         };
         state.isAuthenticated = true;
-        
-        // Store auth data in localStorage
-        localStorage.setItem('token', action.payload.access_token);
-        localStorage.setItem('userId', action.payload.user_id.toString());
-        localStorage.setItem('username', action.payload.username);
-        
-        // Initialize chat connections
-        chatSocketService.connect(action.payload.user_id);
-        groupChatSocketService.setUserId(action.payload.user_id);
+        // Store auth data using tokenUtils
+        storeAuthData(
+          action.payload.access_token,
+          action.payload.user_id,
+          action.payload.username
+        );
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;

@@ -54,9 +54,19 @@ def store_group_message_task(self, message_data):
         
         # Store in database
         stored_message = store_group_message(db, message_schema, sender_id)
+        message_id = stored_message.id  # This is the actual database message ID (integer)
         
-        logger.info(f"Group message saved with ID: {stored_message.id}")
-        return stored_message.id
+        logger.info(f"Group message saved with ID: {message_id}")
+        
+        # Trigger notification for offline members using the actual message ID
+        # Pass the actual database ID, not the task ID
+        try:
+            # IMPORTANT: We use the actual message_id from the database, not self.request.id
+            notify_offline_members_task.delay(group_id, message_id)
+        except Exception as e:
+            logger.error(f"Failed to queue notification task: {str(e)}")
+        
+        return message_id
     except SQLAlchemyError as db_error:
         logger.error(f"Database error in store_group_message_task: {str(db_error)}")
         logger.error(traceback.format_exc())
@@ -65,10 +75,12 @@ def store_group_message_task(self, message_data):
         retry_in = 5 * (2 ** self.request.retries)
         logger.info(f"Retrying database operation in {retry_in} seconds (attempt {self.request.retries + 1}/5)")
         self.retry(exc=db_error, countdown=retry_in)
+        return None
     except Exception as e:
         logger.error(f"Unexpected error in store_group_message_task: {str(e)}")
         logger.error(traceback.format_exc())
         self.retry(exc=e, countdown=10)
+        return None
     finally:
         # Ensure DB session is closed
         if db:
@@ -92,6 +104,14 @@ def notify_offline_members_task(group_id, message_id):
         # Get all members of the group
         members = db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
         member_ids = [member.user_id for member in members]
+        
+        # Ensure message_id is an integer for database query
+        if not isinstance(message_id, int):
+            try:
+                message_id = int(message_id)
+            except (ValueError, TypeError):
+                logger.error(f"Invalid message_id format: {message_id}, must be an integer")
+                return False
         
         # Get the message details
         message = db.query(GroupMessage).filter(GroupMessage.id == message_id).first()
