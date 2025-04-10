@@ -19,3 +19,6 @@ class User(Base):
     # Group chat relationships
     group_memberships = relationship("GroupMember", back_populates="user", cascade="all, delete-orphan")
     group_messages = relationship("GroupMessage", back_populates="sender")
+    
+    ## Contact relationships
+    contacts = relationship("Contact", foreign_keys="[Contact.user_id]", back_populates="user")

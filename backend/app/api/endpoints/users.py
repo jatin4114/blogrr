@@ -11,6 +11,13 @@ from sqlalchemy import or_
 import traceback
 from app.core.auth import get_current_user
 from app.db.models.users import User
+from app.db.models.contacts import Contact  # Import the Contact model
+from app.schemas.contact_schema import ContactResponse  # Import the ContactResponse schema
+from pydantic import BaseModel
+
+class AddContactRequest(BaseModel):
+    contact_id: int
+
 
 router = APIRouter()
 module_logger = logging.getLogger(__name__)
@@ -111,41 +118,60 @@ async def search_users_endpoint(
             detail=f"User search failed: {str(e)}"
         )
 
-@router.get("/get_contacts", response_model=list)
+@router.get("/get_contacts", response_model=list[ContactResponse])
 async def get_user_contacts(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Get all contacts for the current user.
-    Returns a list of users that the current user has interacted with.
     """
     try:
-        # Simple implementation: return all users except the current user
-        # In a real app, you'd filter by actual contacts
-        contacts = db.query(User).filter(User.id != current_user.id).all()
-        
-        # Format each contact with additional fields needed by the frontend
-        result = []
-        for contact in contacts:
-            contact_data = {
-                "id": contact.id,
-                "username": contact.username,
-                "email": contact.email,
-                "isOnline": False,  # You would determine this from your online status tracking
-                "lastMessage": None,
-                "unreadCount": 0  # This would be calculated from messages table
-            }
-            result.append(contact_data)
-            
-        return result
+        # Fetch contacts for the current user
+        contacts = db.query(Contact).filter(Contact.user_id == current_user.id).all()
+        return contacts
     except Exception as e:
         module_logger.error(f"Error getting user contacts: {str(e)}")
-        module_logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get contacts: {str(e)}"
+            detail="Failed to get contacts"
         )
 
 
 
+@router.post("/add_contact", response_model=ContactResponse, status_code=status.HTTP_201_CREATED)
+async def add_contact(
+    request: AddContactRequest,  # Use the Pydantic model for the request body
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Add a contact for the current user.
+    """
+    contact_id = request.contact_id  # Extract contact_id from the request body
+    print(f"Received contact_id: {contact_id}")
+    try:
+        # Check if the contact already exists
+        existing_contact = db.query(Contact).filter(
+            Contact.user_id == current_user.id,
+            Contact.contact_id == contact_id
+        ).first()
+
+        if existing_contact:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Contact already exists"
+            )
+
+        # Add the contact
+        new_contact = Contact(user_id=current_user.id, contact_id=contact_id)
+        db.add(new_contact)
+        db.commit()
+        db.refresh(new_contact)
+        return new_contact
+    except Exception as e:
+        module_logger.error(f"Error adding contact: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to add contact"
+        )

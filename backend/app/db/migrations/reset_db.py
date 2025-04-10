@@ -3,6 +3,7 @@ from app.db.models.users import User
 from app.db.models.blog_posts import BlogPost
 from app.db.models.post_comments import PostComment
 from app.db.models.chat_messages import ChatMessage
+from app.db.models.group_chats import GroupMessage
 from sqlalchemy import text
 
 def reset_database():
