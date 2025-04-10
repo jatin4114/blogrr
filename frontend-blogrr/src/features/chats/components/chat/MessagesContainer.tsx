@@ -7,6 +7,20 @@ export default function MessagesContainer() {
     activeChatId ? state.chat.messages[activeChatId] || [] : []
   );
   
+  if (!activeChatId) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-gray-500">
+        Select a chat to start messaging
+      </div>
+    );
+  }
+  if (messages.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-gray-500">
+        No messages yet. Start the conversation!
+      </div>
+    );
+  }
   return (
     <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-2">
       {messages.map((msg) => (
