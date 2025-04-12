@@ -1,0 +1,127 @@
+<!-- save as group_chat_test.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Group Chat WebSocket Test</title>
+    <style>
+        #messages { height: 300px; overflow-y: scroll; border: 1px solid #ccc; margin-bottom: 10px; padding: 10px; }
+        .system { color: blue; }
+        .error { color: red; }
+        .message { color: black; }
+        .confirmation { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Group Chat WebSocket Test</h1>
+    
+    <div>
+        <label for="groupId">Group ID:</label>
+        <input type="number" id="groupId" value="1"/>
+        
+        <label for="userId">User ID:</label>
+        <input type="number" id="userId" value="1"/>
+        
+        <button onclick="connectSocket()">Connect</button>
+        <button onclick="disconnectSocket()">Disconnect</button>
+    </div>
+    
+    <div id="messages"></div>
+    
+    <div>
+        <input type="text" id="messageInput" placeholder="Type a message" style="width: 70%;" />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+    
+    <script>
+        let socket = null;
+        
+        function addMessage(type, text) {
+            const messages = document.getElementById('messages');
+            const message = document.createElement('div');
+            message.className = type;
+            message.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            messages.appendChild(message);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        function connectSocket() {
+            const groupId = document.getElementById('groupId').value;
+            const userId = document.getElementById('userId').value;
+            
+            if (socket) {
+                addMessage('error', 'Already connected. Disconnect first.');
+                return;
+            }
+            
+            // Create WebSocket connection
+            const wsUrl = `ws://localhost:8000/ws/group/${groupId}/${userId}`;
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(e) {
+                addMessage('system', `Connected to group ${groupId} as user ${userId}`);
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'system') {
+                    addMessage('system', data.message);
+                } else if (data.type === 'error') {
+                    addMessage('error', `Error: ${data.message}`);
+                } else if (data.type === 'confirmation') {
+                    addMessage('confirmation', `Message sent (ID: ${data.message_id})`);
+                } else if (data.type === 'group_message') {
+                    const sender = data.sender_id;
+                    const msg = data.message;
+                    addMessage('message', `User ${sender}: ${msg}`);
+                } else {
+                    addMessage('message', JSON.stringify(data));
+                }
+            };
+            
+            socket.onclose = function(event) {
+                if (event.wasClean) {
+                    addMessage('system', `Connection closed cleanly, code=${event.code}`);
+                } else {
+                    addMessage('error', `Connection died, code=${event.code}`);
+                }
+                socket = null;
+            };
+            
+            socket.onerror = function(error) {
+                addMessage('error', `WebSocket Error: ${error.message}`);
+            };
+        }
+        
+        function disconnectSocket() {
+            if (socket) {
+                socket.close(1000, "User disconnected");
+                socket = null;
+                addMessage('system', 'Disconnected');
+            } else {
+                addMessage('error', 'Not connected');
+            }
+        }
+        
+        function sendMessage() {
+            if (!socket) {
+                addMessage('error', 'Not connected');
+                return;
+            }
+            
+            const message = document.getElementById('messageInput').value;
+            if (!message) {
+                addMessage('error', 'Message cannot be empty');
+                return;
+            }
+            
+            const data = {
+                message: message
+            };
+            
+            socket.send(JSON.stringify(data));
+            document.getElementById('messageInput').value = '';
+        }
+    </script>
+</body>
+</html>

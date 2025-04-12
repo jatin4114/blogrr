@@ -1,0 +1,221 @@
+.blog-app {
+  min-height: 100vh;
+  padding-top: 80px;
+  padding-bottom: 80px; /* Ensure content stays above the bottom bar */
+  position: relative;
+}
+
+/* Updated transition states to support fade sequence */
+.blog-app.transitioning .main-content {
+  pointer-events: none; /* Prevent clicking during transition */
+}
+
+.blog-app.fadeOut .main-content {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+.blog-app.switching .main-content {
+  opacity: 0;
+}
+
+.blog-app.fadeIn .main-content {
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  position: relative;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  z-index: 1; /* Ensure it's above background elements */
+}
+
+/* Remove sliding overlay animation */
+.blog-app.transitioning::after {
+  display: none;
+}
+
+/* Fix the filter button positioning - move to left side of heading */
+.filter-button-container {
+  position: fixed;
+  top: 80px; /* Position just below the topbar */
+  left: 2rem; /* Align with BLOGRR */
+  z-index: 100;
+  pointer-events: all;
+  margin-top: 1rem; /* Align with heading */
+}
+
+/* Fix positioning to ensure content is clickable */
+.blogs-scroll-container {
+  position: relative;
+  width: 100%;
+  z-index: 1; /* Lower than filter but above other content */
+}
+
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem; /* Less gap */
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px; /* Smaller radius */
+  padding: 0.6rem 1rem; /* Smaller button */
+  font-size: 0.9rem; /* Smaller text */
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  opacity: 1;
+  pointer-events: auto; /* Make button clickable */
+  position: relative; /* Add relative positioning to ensure proper stacking */
+  z-index: 100; /* Ensure button stays above panel */
+}
+
+.filter-toggle:hover {
+  background: var(--secondary-color);
+  transform: translateY(-2px);
+}
+
+/* Hide button when not in explore view */
+.filter-toggle.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+
+/* Active state for button when panel is open */
+.filter-toggle.active {
+  background: var(--secondary-color);
+  /* Remove margin-top: 2px; that was causing position shift */
+}
+
+.filter-toggle:hover {
+  background: var(--secondary-color);
+  /* Keep transform only for hover state, not for active */
+  transform: translateY(-2px);
+}
+
+/* Prevent position shift when active */
+.filter-toggle.active:hover {
+  transform: none; /* Prevent hover effect when active */
+}
+
+/* Make sure all position-changing transitions are the same duration */
+.filter-toggle, 
+.filter-toggle:hover,
+.filter-toggle.active,
+.filter-toggle.active:hover {
+  transition: background-color 0.3s ease, transform 0.3s ease, color 0.3s ease;
+}
+
+.filter-toggle i {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle.active i {
+  transform: rotate(180deg);
+}
+
+/* Media queries */
+@media (max-width: 1024px) {
+  .filter-button-container {
+    position: absolute;
+    top: 90px;
+    left: 1.5rem;
+    right: calc(100% - 120px); /* Position to the left of Explore heading */
+    margin-top: 1rem; /* Align with Explore heading */
+  }
+  
+  /* Hide filter text, show only icon on tablet */
+  .filter-toggle {
+    padding: 0.5rem; /* Smaller padding */
+    border-radius: 50%;
+    aspect-ratio: 1/1;
+    width: 34px; /* Smaller width */
+    height: 34px; /* Smaller height */
+    display: flex;
+    justify-content: center;
+    margin-right: 10px;
+  }
+  
+  .filter-toggle .filter-text {
+    display: none;
+  }
+  
+  .filter-toggle i {
+    font-size: 1rem;
+    margin: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 0 0.5rem;
+  }
+  
+  .filter-button-container {
+    position: absolute;
+    top: 65px;
+    left: 1rem;
+    right: calc(100% - 100px); /* Adjust for smaller width */
+    margin-top: 1rem;
+  }
+  
+  .filter-toggle {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    margin: 0; /* Reset margins */
+    transform: translateY(9px); /* Align with heading */
+  }
+  
+  .filter-toggle i {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-button-container {
+    position: absolute;
+    top: 85px;
+    left: 2rem;
+    right: calc(100% - 80px); /* Position left of Explore heading */
+    margin-top: 1rem;
+  }
+  
+  .filter-toggle {
+    width: 31px;
+    height: 31px;
+    padding: 0;
+    margin: 0;
+    margin-left: -15px;
+    /* Disable transformations on mobile to prevent movement */
+    transform: none !important;
+  }
+  
+  /* Ensure no movement when active */
+  .filter-toggle.active {
+    transform: none !important;
+    /* Keep consistent with non-active state */
+    margin-left: -15px !important;
+  }
+  
+  /* Ensure hover doesn't move button on mobile */
+  .filter-toggle:hover {
+    transform: none !important;
+  }
+  
+  .filter-toggle i {
+    font-size: 0.85rem;
+  }
+}

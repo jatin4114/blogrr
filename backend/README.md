@@ -1,25 +1,10 @@
-<<<<<<< HEAD
 # Blogrr - Modern Blogging Platform
 
-A full-stack blogging platform built with FastAPI backend and Html css and JavaScript frontend. Features a modern UI, real-time interactions, and secure authentication.
+A full-stack blogging platform built with FastAPI backend and vanilla JavaScript frontend. Features a modern UI, real-time interactions, and secure authentication.
 
 ## Project Overview
 
 Blogrr is a complete blogging solution that allows users to create, manage, and interact with blog posts. The platform features a responsive design, smooth animations, and a robust backend API.
-=======
-# Blog Platform
-
-A full-stack blog platform built with FastAPI backend and React frontend.
-
-## Features
-
-- User authentication and authorization
-- Create, read, update and delete blog posts
-- Comment system on blog posts
-- Category-based organization
-- Responsive design with modern UI
-- Real-time updates
->>>>>>> Adding chat features
 
 ## Tech Stack
 
@@ -28,12 +13,11 @@ A full-stack blog platform built with FastAPI backend and React frontend.
 - PostgreSQL (Database)
 - SQLAlchemy (ORM)
 - JWT Authentication
-<<<<<<< HEAD
 - Pydantic (Data validation)
 - Bcrypt (Password hashing)
 
 ### Frontend
-- JavaScript
+- Vanilla JavaScript
 - HTML5
 - CSS3 with modern features
 - Font Awesome icons
@@ -199,16 +183,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## note: 
 create_tables and reset_db files are used to manually recreate and reset database {tables}
-=======
-
-### Frontend  
-- React
-- Vite
-- CSS3 with modern animations
-- Responsive design
-
-
-
-
-
->>>>>>> Adding chat features

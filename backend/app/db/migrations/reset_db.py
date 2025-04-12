@@ -1,13 +1,10 @@
-import os
-import sys
-
-# Add the parent directory to Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from app.db.database import engine, Base
 from app.db.models.users import User
 from app.db.models.blog_posts import BlogPost
 from app.db.models.post_comments import PostComment
+from app.db.models.chat_messages import ChatMessage
+from app.db.models.group_chats import GroupMessage
+from app.db.models.contacts import Contact  # Ensure Contact is imported
 from sqlalchemy import text
 
 def reset_database():
@@ -28,4 +25,4 @@ def reset_database():
 if __name__ == "__main__":
     print("Starting database reset...")
     reset_database()
-    print("Reset complete!") 
+    print("Reset complete!")

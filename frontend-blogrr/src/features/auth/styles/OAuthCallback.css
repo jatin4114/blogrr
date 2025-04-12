@@ -1,0 +1,40 @@
+.oauth-error-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 100%);
+}
+
+.oauth-error {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+.oauth-error i {
+  font-size: 3rem;
+  color: #ff5757;
+  margin-bottom: 1rem;
+}
+
+.oauth-error h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.oauth-error p {
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.redirect-message {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #888;
+  font-style: italic;
+}

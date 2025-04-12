@@ -1,0 +1,48 @@
+.create-blog-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+.create-blog-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.create-blog-btn i {
+  font-size: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .create-blog-btn {
+    display: none; /* Hide on tablet and mobile devices */
+  }
+}
+
+/* Keep mobile-specific styling for when button is shown in other contexts */
+@media (max-width: 768px) {
+  .create-blog-btn {
+    width: 50px;
+    height: 50px;
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .create-blog-btn i {
+    font-size: 1.2rem;
+  }
+}

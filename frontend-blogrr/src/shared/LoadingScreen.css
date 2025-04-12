@@ -1,0 +1,138 @@
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 300px;
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.loading-logo i {
+  font-size: 3rem;
+  color: #818cf8; /* var(--secondary-color) */
+  margin-bottom: 1rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.loading-logo h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #334155; /* var(--text-color) */
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out 0.5s forwards;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(129, 140, 248, 0.3);
+  border-top-color: var(--secondary-color, #818cf8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.loading-progress-container {
+  width: 100%;
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out 1s forwards;
+}
+
+.loading-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(129, 140, 248, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.loading-progress-fill {
+  height: 100%;
+  background: #818cf8; /* var(--secondary-color) */
+  border-radius: 10px;
+  transition: width 0.3s ease-out;
+}
+
+.loading-text {
+  font-size: 0.9rem;
+  color: #334155; /* var(--text-color) */
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.loading-content h2 {
+  font-size: 1.5rem;
+  color: var(--text-color, #334155);
+  margin-bottom: 0.5rem;
+}
+
+.loading-content p {
+  font-size: 1rem;
+  color: var(--text-color, #334155);
+  opacity: 0.7;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Adding a background shape animation */
+.loading-screen::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(129, 140, 248, 0.1) 0%, rgba(165, 180, 252, 0.1) 100%);
+  clip-path: circle(50% at right 80%);
+  z-index: -1;
+}
+
+.loading-screen::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, rgba(165, 180, 252, 0.1) 0%, rgba(129, 140, 248, 0.1) 100%);
+  clip-path: circle(40% at left 25%);
+  z-index: -1;
+}

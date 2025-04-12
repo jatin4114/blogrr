@@ -1,0 +1,57 @@
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  /* Updated background and added subtle border-top */
+  background: rgba(255, 255, 255, 0.95);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 1000;
+  padding: 0 10px;
+}
+
+.bottom-bar-btn {
+  background: transparent;
+  border: none;
+  color: #333;
+  font-size: 1.3rem; /* Slightly smaller to fit all buttons */
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  padding: 5px;
+  flex: 1;
+  text-align: center;
+}
+
+.bottom-bar-btn:active {
+  transform: scale(0.95);
+}
+
+/* Hide bottom bar on larger screens */
+@media (min-width: 769px) {
+  .bottom-bar {
+    display: none;
+  }
+}
+
+/* Update the media query to include tablet devices */
+@media (max-width: 1024px) {
+  .bottom-bar {
+    display: flex; /* Show bottombar on both mobile and tablet */
+  }
+}
+
+/* Keep any existing mobile-specific styles */
+@media (max-width: 768px) {
+  /* existing mobile-specific code */
+}
+
+/* Hide bottombar on desktop */
+@media (min-width: 1025px) {
+  .bottom-bar {
+    display: none;
+  }
+}

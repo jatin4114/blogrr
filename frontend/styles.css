@@ -1,0 +1,2269 @@
+:root {
+    --primary-color: #a5b4fc;
+    --secondary-color: #818cf8;
+    --background-color: #f8fafc;
+    --text-color: #334155;
+    --error-color: #ef4444;
+    --success-color: #22c55e;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f9ff 100%);
+    padding: 0;
+    margin: 0;
+}
+
+.auth-container {
+    margin: auto;
+    width: 100%;
+    max-width: 450px;
+    padding: 2rem;
+}
+
+.app-header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.app-header p {
+    font-size: 1.0rem;
+    opacity: 0.9;
+}
+
+.user-icon {
+    width: 80px;
+    height: 80px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -40px auto 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 4px solid white;
+}
+
+.user-icon i {
+    font-size: 40px;
+    color: var(--secondary-color);
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #e2e8f0;
+    margin-top: 1.5rem;
+}
+
+.tab {
+    flex: 1;
+    padding: 1rem;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.tab i {
+    font-size: 1.1rem;
+}
+
+.tab.active {
+    color: var(--secondary-color);
+    border-bottom: 3px solid var(--secondary-color);
+}
+
+.form-section {
+    padding: 2rem;
+    display: none;
+}
+
+.form-section.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-group label i {
+    color: var(--secondary-color);
+    font-size: 1.1rem;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-section.active {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* Topbar Styles */
+.topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 999;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 1; /* Allow it to grow */
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    flex: 2; /* Allow it to grow */
+    justify-content: flex-end; /* Align to the right */
+}
+
+.nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background: rgba(255, 255, 255, 0.9);
+        width: 100%;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .nav-btn {
+        width: 100%;
+        text-align: left;
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .nav-btn:last-child {
+        border-bottom: none;
+    }
+
+    .topbar .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .topbar .menu-toggle {
+        display: flex;
+    }
+
+    .nav-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .create-blog-btn {
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+
+    .create-blog-btn i {
+        font-size: 1.25rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .topbar .menu-toggle {
+        display: none;
+    }
+}
+
+/* Navigation Active States */
+.nav-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Slide Animations */
+.blogs-container {
+    transition: transform 0.3s ease-in-out;
+}
+
+.slide-left {
+    animation: slideLeft 0.3s ease-in-out;
+}
+
+.slide-right {
+    animation: slideRight 0.3s ease-in-out;
+}
+
+@keyframes slideLeft {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideRight {
+    from {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* No Blogs Message */
+.no-blogs-message {
+    text-align: center;
+    grid-column: 1 / -1;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    color: var(--text-color);
+    font-size: 1.1rem;
+}
+
+/* Blog Container Overflow */
+.blogs-container {
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Blogs Container Styles */
+.blogs-container {
+    margin-top: 80px;
+    padding: 2rem;
+    max-width: 1200px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    min-height: calc(100vh - 80px); /* Account for topbar height */
+}
+
+.blogs-container h2 {
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    text-align: center;
+    font-size: 2rem;
+    height: 2.5rem; /* Fixed height */
+}
+
+.blogs-subtitle {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    font-style: italic;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    height: 1.5rem; /* Fixed height */
+    line-height: 1.5rem;
+}
+
+.blogs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    width: 100%;
+    align-items: stretch; /* Ensure all cards stretch to match tallest */
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-out;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Update blog card styles for consistent height */
+.blog-wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.blog-wrapper:nth-child(1) { animation-delay: 0.1s; }
+.blog-wrapper:nth-child(2) { animation-delay: 0.2s; }
+.blog-wrapper:nth-child(3) { animation-delay: 0.3s; }
+.blog-wrapper:nth-child(4) { animation-delay: 0.4s; }
+.blog-wrapper:nth-child(5) { animation-delay: 0.5s; }
+.blog-wrapper:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.blog-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: visible;
+    padding-top: 3rem;
+    cursor: pointer;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+.blog-card.floating {
+    transform: translateY(0);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-card.floating:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.blog-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.blog-card h3 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 3.5rem; /* Fixed height for title */
+}
+
+.blog-card p {
+    color: var(--text-color);
+    opacity: 0.8;
+    line-height: 1.6;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    margin-bottom: auto;
+    font-size: 1rem;
+    flex: 1;
+    min-height: 6.4rem; /* Fixed height for 4 lines of text */
+}
+
+.blog-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.blog-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    height: 24px; /* Fixed height */
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    height: 24px; /* Fixed height */
+}
+
+.author-info i {
+    font-size: 1.1rem;
+    width: 20px; /* Fixed width */
+}
+
+.blog-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    height: 32px; /* Fixed height */
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    color: var(--text-color);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.edit-btn:hover {
+    background: var(--secondary-color);
+}
+
+.delete-btn:hover {
+    background: var(--error-color);
+}
+
+.like-btn:hover {
+    background: #f87171;
+}
+
+/* Edit Popup Styles */
+.edit-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.edit-popup-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.3s ease;
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.popup-header h3 {
+    color: var(--text-color);
+    font-size: 1.5rem;
+}
+
+.close-popup {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    padding: 0.5rem;
+    font-size: 1.2rem;
+    transition: color 0.2s ease;
+}
+
+.close-popup:hover {
+    color: var(--error-color);
+}
+
+.edit-popup textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .blog-card h3 {
+        font-size: 1.2rem;
+        min-height: 3rem;
+    }
+
+    .blog-card p {
+        -webkit-line-clamp: 3;
+        min-height: 4.8rem; /* Adjusted for 3 lines */
+    }
+
+    .blog-category {
+        top: 0.75rem;
+        right: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+    }
+
+    .nav-links {
+        flex-direction: column;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        background: rgba(255, 255, 255, 0.9);
+        width: 100%;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-links.show {
+        display: flex;
+    }
+
+    .nav-btn {
+        width: 100%;
+        text-align: left;
+        padding: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .nav-btn:last-child {
+        border-bottom: none;
+    }
+
+    .topbar .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+
+    .topbar .menu-toggle {
+        display: flex;
+    }
+
+    .nav-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .create-blog-btn {
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+
+    .create-blog-btn i {
+        font-size: 1.25rem;
+    }
+
+    .topbar .menu-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+}
+
+@media (min-width: 769px) {
+    .topbar .menu-toggle {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .blog-card {
+        height: 280px;
+    }
+
+    .blog-card h3 {
+        font-size: 1.2rem;
+        height: 3rem;
+    }
+
+    .blog-card p {
+        -webkit-line-clamp: 3;
+        font-size: 0.95rem;
+    }
+}
+
+/* Update Comments Styles */
+.comments-section {
+    margin-top: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+/* Show comments on hover or when clicked */
+.comments-section.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Remove the hover selector from blog-wrapper */
+.blog-wrapper {
+    position: relative;
+    padding-bottom: 1rem;
+}
+
+/* Update comment button styles */
+.comment-btn {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.comment-btn:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+/* Update hover indicator */
+.comment-btn::after {
+    content: 'Hover to view';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: var(--text-color);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.comment-btn:hover::after {
+    opacity: 0.7;
+}
+
+/* Add clicked state styles */
+.comments-section.clicked {
+    display: block;
+}
+
+/* Rest of the comment styles remain the same */
+.comments-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding-right: 0.5rem;
+}
+
+.comment {
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.comment:last-child {
+    border-bottom: none;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.comment-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.comment-author i {
+    color: var(--secondary-color);
+}
+
+.comment p {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.comment-form {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.comment-form input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.comment-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.comment-submit {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.comment-submit:hover {
+    transform: scale(1.1);
+}
+
+.comment-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--secondary-color);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Update scrollbar style for comments list */
+.comments-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.comments-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.comments-list::-webkit-scrollbar-thumb:hover {
+    background: var(--secondary-color);
+}
+
+/* Add transition for smooth appearance */
+.comments-section {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.comments-section.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Update the blog grid to handle comments better */
+.blogs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+    width: 100%;
+}
+
+/* Remove fixed height from blog card */
+.blog-card {
+    height: auto; /* Changed from fixed height */
+    min-height: 200px; /* Minimum height for consistency */
+}
+
+/* Update blog content to be more flexible */
+.blog-content {
+    flex: 1;
+    margin-bottom: 1rem;
+}
+
+/* Add animation for comment toggle */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.comments-section.active {
+    display: block;
+    animation: slideDown 0.3s ease forwards;
+}
+
+/* Update Sort and Filter Panel Styles */
+.sort-filter-panel {
+    background: rgba(255, 255, 255, 0.98);
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    position: fixed;
+    right: 2rem;
+    top: 100px;
+    z-index: 90;
+    transform: translateY(-10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.sort-filter-panel.show {
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Filter toggle button */
+.filter-toggle {
+    position: fixed;
+    right: 2rem;
+    top: 100px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    z-index: 91;
+}
+
+.filter-toggle:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.filter-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.filter-toggle.active i {
+    transform: rotate(180deg);
+}
+
+/* Section styles */
+.filter-section, 
+.sort-section {
+    background: rgba(255, 255, 255, 0.5);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.filter-section:hover,
+.sort-section:hover {
+    transform: translateY(-2px);
+}
+
+.filter-section h3,
+.sort-section h3 {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.9;
+}
+
+/* Filter groups */
+.filter-group,
+.sort-group {
+    margin-bottom: 1rem;
+}
+
+.filter-group:last-child,
+.sort-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-group label,
+.sort-group label {
+    display: block;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.8;
+}
+
+/* Select styles */
+.filter-group select,
+.sort-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--text-color);
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+}
+
+.filter-group select:hover,
+.sort-group select:hover {
+    border-color: var(--primary-color);
+}
+
+.filter-group select:focus,
+.sort-group select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
+/* Active filters badge */
+.active-filters {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--secondary-color);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.3s ease;
+}
+
+.active-filters.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .filter-toggle {
+        top: 90px;
+        right: 1rem;
+    }
+
+    .sort-filter-panel {
+        top: 90px;
+        right: 1rem;
+    }
+}
+
+/* Update create blog button styles */
+.create-blog-btn {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    border-radius: 50%;  /* Make it circular */
+    width: 60px;
+    height: 60px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+.create-blog-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.create-blog-btn i {
+    font-size: 1.5rem;
+}
+
+/* Add tooltip for the button */
+.create-blog-btn::after {
+    content: 'Create New Blog';
+    position: absolute;
+    right: 70px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.create-blog-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .create-blog-btn {
+        bottom: 1.5rem;
+        right: 1.5rem;
+        width: 50px;
+        height: 50px;
+    }
+
+    .create-blog-btn i {
+        font-size: 1.25rem;
+    }
+}
+
+/* Update create blog form styles */
+#create-blog-form textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 0.75rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 1rem;
+}
+
+#create-blog-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Add animation for the create blog popup */
+.edit-popup-content {
+    animation: slideUpFade 0.3s ease;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Update welcome banner styles */
+.welcome-banner {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 1.5rem 2rem;
+    margin-top: 60px;
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateY(-100%);
+}
+
+.welcome-banner.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.welcome-banner.hide {
+    opacity: 0;
+    transform: translateY(-100%);
+}
+
+/* Add transition for inner content */
+.welcome-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(20px);
+    opacity: 0;
+}
+
+.welcome-banner.show .welcome-content {
+    transform: translateY(0);
+    opacity: 1;
+    transition-delay: 0.2s; /* Slight delay for content to follow banner */
+}
+
+.welcome-banner.hide .welcome-content {
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+}
+
+.welcome-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1.5rem;
+}
+
+.user-avatar {
+    background: rgba(255, 255, 255, 0.2);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+.user-avatar i {
+    font-size: 1.75rem;
+    color: white;
+}
+
+.welcome-text {
+    text-align: left;
+    line-height: 1.4;
+}
+
+.welcome-text h3 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin: 0;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.welcome-text h3 span {
+    font-weight: 600;
+    font-size: 1.3rem;
+}
+
+.welcome-text p {
+    font-size: 0.95rem;
+    opacity: 0.8;
+    margin: 0.25rem 0 0 0;
+    font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .welcome-banner {
+        padding: 1.5rem 1rem;
+    }
+
+    .welcome-content {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+
+    .welcome-text {
+        text-align: center;
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .user-avatar i {
+        font-size: 2rem;
+    }
+
+    .welcome-text h2 {
+        font-size: 1.75rem;
+    }
+}
+
+/* Add blog category styles */
+.blog-category {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.blog-category i {
+    font-size: 0.8rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .blog-category {
+        top: 0.75rem;
+        right: 0.75rem;
+        padding: 0.3rem 0.6rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Add full screen blog modal styles */
+.blog-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    overflow-y: auto;
+    backdrop-filter: blur(10px);
+}
+
+.blog-modal.active {
+    display: block;
+    opacity: 1;
+}
+
+.blog-modal-content {
+    max-width: 90%;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    position: relative;
+    animation: modalSlideUp 0.3s ease;
+}
+
+.blog-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.blog-modal-title {
+    font-size: 2rem;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.blog-modal-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.close-modal {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    transition: all 0.3s ease;
+}
+
+.close-modal:hover {
+    color: var(--error-color);
+    transform: rotate(90deg);
+}
+
+.blog-modal-body {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--text-color);
+    margin-bottom: 2rem;
+}
+
+.blog-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-author-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-author-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Update blog card to be clickable */
+.blog-card {
+    cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .blog-modal-content {
+        max-width: 95%;
+        margin: 1rem auto;
+        padding: 1.5rem;
+    }
+
+    .blog-modal-title {
+        font-size: 1.5rem;
+    }
+
+    .blog-modal-body {
+        font-size: 1rem;
+    }
+}
+
+/* Modal Comments Styles */
+.modal-comments-section {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.modal-comments-section h3 {
+    font-size: 1.2rem;
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.modal-comment {
+    background: rgba(0, 0, 0, 0.02);
+    padding: 1rem;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.modal-comment:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.modal-comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.modal-comment-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.modal-comment p {
+    color: var(--text-color);
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.modal-comment-form {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.modal-comment-form input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.modal-comment-form input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.modal-comment-form .comment-submit {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-comment-form .comment-submit:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.no-comments {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.7;
+    font-style: italic;
+    padding: 1rem;
+}
+
+/* Add transition styles */
+.blogs-grid {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all 0.3s ease-out;
+}
+
+/* Update blog card styles */
+.blog-card {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* Add staggered animation for blog cards */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Add animation delay for staggered effect */
+.blog-wrapper {
+    opacity: 0;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.blog-wrapper:nth-child(1) { animation-delay: 0.1s; }
+.blog-wrapper:nth-child(2) { animation-delay: 0.2s; }
+.blog-wrapper:nth-child(3) { animation-delay: 0.3s; }
+.blog-wrapper:nth-child(4) { animation-delay: 0.4s; }
+.blog-wrapper:nth-child(5) { animation-delay: 0.5s; }
+.blog-wrapper:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Update transition for filter panel */
+.sort-filter-panel {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add page transition container */
+.page-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.page-transition.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Add styles for user info in topbar */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(var(--primary-color-rgb), 0.1);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+    border: 1px solid rgba(var(--primary-color-rgb), 0.2);
+}
+
+.user-info i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.user-info span {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* Update nav-links to accommodate user info */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .user-info {
+        padding: 0.4rem 0.75rem;
+        margin-left: 0.5rem;
+    }
+    
+    .user-info span {
+        font-size: 0.9rem;
+    }
+}
+
+/* Add decorative shapes and background effects */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(var(--primary-color-rgb), 0.05) 0%, transparent 70%);
+    z-index: -1;
+    animation: rotateBackground 30s linear infinite;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -50%;
+    left: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(var(--secondary-color-rgb), 0.05) 0%, transparent 70%);
+    z-index: -1;
+    animation: rotateBackground 25s linear infinite reverse;
+}
+
+/* Decorative shapes for blog cards */
+.blog-card::before,
+.blog-card::after {
+    display: none; /* Or you can completely remove these blocks */
+}
+
+/* Update blog card hover effect without shapes */
+.blog-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.blog-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+}
+
+/* Keep the floating effect for explore view */
+.blog-card.floating {
+    transform: translateY(0);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-card.floating:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced animations */
+@keyframes rotateBackground {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Enhanced blog card hover effects */
+.blog-card {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.blog-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.98);
+}
+
+/* Enhanced filter toggle button */
+.filter-toggle {
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.filter-toggle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.filter-toggle:hover::before {
+    width: 200%;
+    height: 200%;
+}
+
+/* Enhanced modal animations */
+.blog-modal-content {
+    animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+    0% {
+        opacity: 0;
+        transform: scale(0.9) translateY(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Elegant loading animation */
+.loading-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(var(--primary-color-rgb), 0.3);
+    border-radius: 50%;
+    border-top-color: var(--primary-color);
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Enhanced welcome banner */
+.welcome-banner {
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, 
+        rgba(255,255,255,0.1) 0%, 
+        rgba(255,255,255,0.2) 50%, 
+        rgba(255,255,255,0.1) 100%);
+    transform: translateX(-100%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    100% { transform: translateX(100%); }
+}
+
+/* Enhanced user info hover effect */
+.user-info {
+    transition: all 0.3s ease;
+}
+
+.user-info:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.15);
+    background: rgba(var(--primary-color-rgb), 0.15);
+}
+
+/* Add subtle pulse animation to create blog button */
+.create-blog-btn {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb), 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(var(--primary-color-rgb), 0); }
+    100% { box-shadow: 0 0 0 0 rgba(var(--primary-color-rgb), 0); }
+}
+
+/* Add floating shapes in background */
+.background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.shape {
+    position: absolute;
+    opacity: 0.1;
+}
+
+.shape-1 {
+    top: 20%;
+    left: 10%;
+    width: 100px;
+    height: 100px;
+    border: 4px solid var(--primary-color);
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    animation: floatShape 15s ease-in-out infinite, rotateShape 20s linear infinite;
+}
+
+.shape-2 {
+    top: 60%;
+    right: 15%;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    animation: floatShape 18s ease-in-out infinite reverse, rotateShape 25s linear infinite reverse;
+}
+
+.shape-3 {
+    bottom: 15%;
+    left: 25%;
+    width: 80px;
+    height: 80px;
+    border: 4px solid var(--secondary-color);
+    border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+    animation: floatShape 20s ease-in-out infinite, rotateShape 30s linear infinite;
+}
+
+.shape-4 {
+    top: 30%;
+    right: 30%;
+    width: 90px;
+    height: 90px;
+    background: linear-gradient(-45deg, var(--primary-color), var(--secondary-color));
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    animation: floatShape 25s ease-in-out infinite reverse, rotateShape 35s linear infinite reverse;
+}
+
+@keyframes floatShape {
+    0%, 100% {
+        transform: translateY(0) translateX(0);
+    }
+    25% {
+        transform: translateY(-20px) translateX(10px);
+    }
+    50% {
+        transform: translateY(0) translateX(20px);
+    }
+    75% {
+        transform: translateY(20px) translateX(10px);
+    }
+}
+
+@keyframes rotateShape {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Add blur effect to shapes when scrolling */
+.background-shapes.scrolling .shape {
+    filter: blur(2px);
+    transition: filter 0.3s ease;
+}
+
+/* Update Hamburger Button Styles */
+.menu-toggle {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1001;
+    background: var(--primary-color);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.menu-toggle:hover {
+    background: var(--secondary-color);
+    transform: scale(1.1);
+}
+
+.menu-toggle.active {
+    background: var(--secondary-color);
+    transform: rotate(90deg);
+}
+
+/* Navigation Menu Styles */
+.nav-menu {
+    display: none; /* Hide by default on desktop */
+}
+
+.menu-toggle {
+    display: none; /* Hide by default on desktop */
+}
+
+/* Regular Navigation Links */
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.nav-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .nav-menu {
+        display: block;
+        position: fixed;
+        top: 0;
+        right: -300px;
+        height: 100vh;
+        width: 300px;
+        background: white;
+        z-index: 1000;
+        transition: right 0.3s ease;
+        box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .nav-menu.show {
+        right: 0;
+    }
+
+    .menu-toggle {
+        display: flex;
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1001;
+        background: var(--primary-color);
+        border: none;
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .topbar .nav-links {
+        display: none; /* Hide regular nav links on mobile */
+    }
+
+    .nav-menu .nav-links {
+        margin-top: 70px;
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-menu .nav-btn {
+        width: 100%;
+        text-align: left;
+        padding: 1rem;
+    }
+}
+
+/* Semi-transparent overlay when menu is open */
+.nav-menu::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: -1;
+}
+
+.nav-menu.show::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .nav-menu {
+        width: 100%;
+        right: -100%;
+    }
+}
+
+/* Menu Toggle Button */
+.menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    margin-left: 1rem;
+}
+
+.menu-toggle:hover {
+    color: var(--primary-color);
+    transform: rotate(90deg);
+}
+
+.menu-toggle.active {
+    color: var(--primary-color);
+    transform: rotate(90deg);
+}
+
+/* Topbar Navigation Styles */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+.menu-toggle {
+    display: none; /* Hide hamburger by default */
+}
+
+/* Media Query for Mobile */
+@media (max-width: 768px) {
+    .topbar .nav-links {
+        display: none; /* Hide topbar buttons on mobile */
+    }
+
+    .menu-toggle {
+        display: flex; /* Show hamburger on mobile */
+    }
+
+    .nav-menu {
+        display: block; /* Show mobile menu */
+    }
+}
+
+/* Media Query for Desktop */
+@media (min-width: 769px) {
+    .nav-menu {
+        display: none; /* Hide mobile menu on desktop */
+    }
+
+    .topbar .nav-links {
+        display: flex; /* Show buttons in topbar on desktop */
+    }
+
+    .menu-toggle {
+        display: none; /* Hide hamburger on desktop */
+    }
+}

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4285f4;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google OAuth Test Page</h1>
+    <p>Use this page to test the Google OAuth flow integration with your FastAPI backend.</p>
+    
+    <button id="loginBtn">Login with Google</button>
+    
+    <h2>Result:</h2>
+    <pre id="result">Click the button above to start the OAuth flow...</pre>
+    
+    <script>
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            try {
+                // Get the auth URL from the backend
+                const response = await fetch('/users/auth/google');
+                const data = await response.json();
+                
+                // Display info
+                document.getElementById('result').innerHTML = 'Redirecting to Google login...\nURL: ' + data.auth_url;
+                
+                // Store the current time for validation after returning
+                localStorage.setItem('oauth_test_start', Date.now());
+                
+                // Redirect to Google login
+                setTimeout(() => {
+                    window.location.href = data.auth_url;
+                }, 1500);
+                
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            }
+        });
+        
+        // Check if we're returning from OAuth
+        window.addEventListener('load', () => {
+            // Look for token in URL fragment or query params
+            const params = new URLSearchParams(window.location.search);
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            
+            // Check for access_token in response
+            const accessToken = params.get('access_token') || hashParams.get('access_token');
+            
+            if (accessToken) {
+                const startTime = localStorage.getItem('oauth_test_start');
+                const timeTaken = startTime ? Math.round((Date.now() - startTime) / 1000) : 'unknown';
+                
+                document.getElementById('result').innerHTML = 
+                    `<span class="success">✓ OAuth Successful!</span>\n\n` +
+                    `Access Token: ${accessToken}\n` +
+                    `Time taken: ${timeTaken} seconds\n\n` +
+                    `You can now use this token for authenticated API calls.`;
+                    
+                localStorage.removeItem('oauth_test_start');
+            }
+            
+            // Also check for errors
+            const error = params.get('error') || hashParams.get('error');
+            if (error) {
+                document.getElementById('result').innerHTML = 
+                    `<span class="error">✗ OAuth Failed</span>\n\n` +
+                    `Error: ${error}\n` +
+                    `Error Description: ${params.get('error_description') || hashParams.get('error_description') || 'No description provided'}`;
+            }
+        });
+    </script>
+</body>
+</html>
