@@ -14,12 +14,22 @@ from dotenv import load_dotenv
 # Import all models to avoid circular reference issues
 from app.db.models import BlogPost, User, PostComment, ChatMessage, Contact
 
-# Load environment variables
-load_dotenv()
+# Load environment variables with safe error handling
+try:
+    # Ensure dotenv is properly installed
+    load_dotenv(override=True)
+    
+    # Get database URL with fallback
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        DATABASE_URL = "postgresql://postgres:postgres@localhost/blogrr"
+        logging.warning(f"DATABASE_URL not found, using default: {DATABASE_URL}")
+except Exception as e:
+    logging.error(f"Error loading environment variables: {str(e)}")
+    # Fallback database URL if environment loading fails
+    DATABASE_URL = "postgresql://postgres:postgres@localhost/blogrr"
 
-# Get database URL
-DATABASE_URL = os.getenv("DATABASE_URL")
-
+# Set up logger
 logger = logging.getLogger(__name__)
 
 @celery_app.task(bind=True, name="app.tasks.chat_messages_tasks.deliver_message_task", 

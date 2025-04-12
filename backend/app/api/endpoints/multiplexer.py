@@ -17,25 +17,43 @@ from pydantic import BaseModel, validator
 import time
 from .users import User
 
-
 # Import services
 from app.services.chat_messages_service import store_message, get_undelivered_messages, mark_messages_as_delivered
 from app.services.group_chat_service import store_group_message, get_group_messages
 from app.schemas.chat_message_schema import ChatMessageSchema
 from app.schemas.group_chat_schema import GroupMessageCreate
 
-# Try to import Celery and Redis functionality
-try:
-    from app.tasks.chat_messages_tasks import deliver_message_task
-    from app.tasks.group_chat_tasks import store_group_message_task, notify_offline_members_task
-    from app.services.redis_service import RedisService
-    redis_service = RedisService()
-    CELERY_AVAILABLE = True
-except ImportError:
-    CELERY_AVAILABLE = False
-
 # Configure logger
 logger = logging.getLogger(__name__)
+
+# Import Celery tasks directly and store references at module level
+CELERY_AVAILABLE = False
+deliver_message_task = None
+store_group_message_task = None
+notify_offline_members_task = None
+redis_service = None
+
+try:
+    # Import each task individually with error handling for each one
+    try:
+        from app.tasks.chat_messages_tasks import deliver_message_task
+        from app.tasks.group_chat_tasks import store_group_message_task, notify_offline_members_task
+        from app.services.redis_service import RedisService
+        redis_service = RedisService()
+        
+        # Only set CELERY_AVAILABLE to True if all imports succeeded
+        if deliver_message_task and store_group_message_task and notify_offline_members_task and redis_service:
+            CELERY_AVAILABLE = True
+            logger.info("Successfully imported all Celery tasks and Redis service")
+        else:
+            logger.warning("Some Celery tasks or Redis service could not be imported")
+    except ImportError as e:
+        logger.error(f"ImportError for Celery tasks: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error importing Celery tasks: {str(e)}")
+except Exception as e:
+    logger.error(f"Unexpected error setting up Celery: {str(e)}")
+
 router = APIRouter()
 
 @router.get("/multiplex/health")
@@ -656,6 +674,9 @@ async def multiplexer_endpoint(websocket: WebSocket):
 # Message handler functions
 async def handle_direct_message(message: Dict, user_id: int, db: Session, websocket: WebSocket):
     """Handle a direct message"""
+    # Add global statement to access module-level variableses
+    global deliver_message_task, CELERY_AVAILABLE
+    
     transaction_in_progress = False
     try:
         # Extract message content
@@ -707,7 +728,7 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
         stored_message = None
         server_message_id = None
         
-        if CELERY_AVAILABLE:
+        if CELERY_AVAILABLE and deliver_message_task:
             try:
                 # Use Celery for async processing
                 task_result = deliver_message_task.delay(message_dict)
@@ -804,6 +825,9 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
 
 async def handle_group_message(message: Dict, user_id: int, db: Session, websocket: WebSocket):
     """Handle a group message"""
+    # Add global declaration here too for consistency
+    global CELERY_AVAILABLE, store_group_message_task, notify_offline_members_task, redis_service
+    
     transaction_in_progress = False
     try:
         # Extract message content

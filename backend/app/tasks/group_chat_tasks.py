@@ -10,21 +10,39 @@ from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 import os
 from dotenv import load_dotenv
-from app.services.redis_service import RedisService
-from app.services.websocket_service import manager
 
 # Import all models to avoid circular reference issues
 from app.db.models import BlogPost, User, PostComment, ChatMessage
 from app.db.models.group_chats import GroupChat, GroupMember, GroupMessage
 
-# Load environment variables
-load_dotenv()
+# Load environment variables with proper error handling
+try:
+    # Ensure dotenv is properly installed
+    load_dotenv(override=True)
+    
+    # Get database URL with fallback
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        DATABASE_URL = "postgresql://postgres:postgres@localhost/blogrr"
+        logging.warning(f"DATABASE_URL not found, using default: {DATABASE_URL}")
+except Exception as e:
+    logging.error(f"Error loading environment variables: {str(e)}")
+    # Fallback database URL if environment loading fails
+    DATABASE_URL = "postgresql://postgres:postgres@localhost/blogrr"
 
-# Get database URL
-DATABASE_URL = os.getenv("DATABASE_URL")
-redis_service = RedisService()
-
+# Set up logger
 logger = logging.getLogger(__name__)
+
+# Import Redis service with proper error handling
+try:
+    from app.services.redis_service import RedisService
+    redis_service = RedisService()
+except ImportError as e:
+    logger.error(f"Could not import RedisService: {str(e)}")
+    redis_service = None
+except Exception as e:
+    logger.error(f"Error initializing RedisService: {str(e)}")
+    redis_service = None
 
 @celery_app.task(bind=True, name="app.tasks.group_chat_tasks.store_group_message_task", 
                 max_retries=5, acks_late=True)
