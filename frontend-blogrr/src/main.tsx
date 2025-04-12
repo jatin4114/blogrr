@@ -1,19 +1,21 @@
-import './index.css'; // Corrected the import path
-
-// Import global CSS for root variables, should be at top level
-import 'styles/global.css'
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { Provider } from 'react-redux'
-import { store } from 'store/store'
-
+import React from 'react'
+import ReactDOM from 'react-dom/client'
 import App from './App'
+import { BrowserRouter } from 'react-router-dom'
+import { Provider } from 'react-redux'
+import { store, persistor } from './store/store'
+import { PersistGate } from 'redux-persist/integration/react'
+import './index.css'
+import 'styles/global.css'
 
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
     <Provider store={store}>
-      <App />
+      <PersistGate loading={null} persistor={persistor}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </PersistGate>
     </Provider>
-  </StrictMode>,
+  </React.StrictMode>,
 )

@@ -7,6 +7,7 @@ class ChatMessageSchema(BaseModel):
     message: str
     timestamp: datetime | None = None
     delivered: bool = False
+    read: bool = False
 
     class Config:
         orm_mode = True

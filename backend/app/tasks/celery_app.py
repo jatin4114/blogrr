@@ -31,7 +31,7 @@ celery_app.conf.update(
     enable_utc=True,
     broker_connection_retry=True,
     broker_connection_retry_on_startup=True,
-    broker_connection_max_retries=5,
+    broker_connection_max_retries=10,  # Increased from 5 to 10
     broker_transport_options={'visibility_timeout': 3600},
 )
 

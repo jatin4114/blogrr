@@ -4,6 +4,7 @@ from app.db.models.blog_posts import BlogPost
 from app.db.models.post_comments import PostComment
 from app.db.models.chat_messages import ChatMessage
 from app.db.models.group_chats import GroupMessage
+from app.db.models.contacts import Contact  # Ensure Contact is imported
 from sqlalchemy import text
 
 def reset_database():
@@ -24,4 +25,4 @@ def reset_database():
 if __name__ == "__main__":
     print("Starting database reset...")
     reset_database()
-    print("Reset complete!") 
+    print("Reset complete!")

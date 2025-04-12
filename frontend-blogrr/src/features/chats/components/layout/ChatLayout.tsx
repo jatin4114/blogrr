@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { fetchContacts } from "../../store/slices/ContactSlice";
 import { setActiveChatId } from "../../store/slices/ChatSlice";
 import { useAppSelector } from "@/store/store";
+// import Topbar from "@/shared/ui/topbar/Topbar";
 
 export default function ChatLayout() {
   UseSocket(); // Initialize socket connection when ChatLayout is rendered
@@ -23,8 +24,11 @@ export default function ChatLayout() {
   }, [contacts, dispatch]);
 
   return (
+    
     <div className="flex h-full w-full overflow-hidden">
+      
       <SideBar />
+      
       <ChatWindow />
     </div>
   );

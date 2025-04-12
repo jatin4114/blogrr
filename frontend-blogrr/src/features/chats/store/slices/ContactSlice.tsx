@@ -33,9 +33,9 @@ export const fetchContacts = createAsyncThunk<Contact[]>(
         },
       });
       const contacts = response.data.map((item: any) => ({
-        id: item.contact.id.toString(),
-        name: item.contact.username,
-        isOnline: false, // You can update this based on your logic
+        id: item.contact.id.toString(), // Ensure `contact.id` exists in the backend response
+        name: item.contact.username,    // Ensure `contact.username` exists in the backend response
+        isOnline: false,                // Update this based on your logic
         lastMessage: null,
         unreadCount: 0,
       }));

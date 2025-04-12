@@ -11,9 +11,8 @@ class Contact(Base):
     contact_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Ensure that a user cannot add the same contact multiple times
     __table_args__ = (UniqueConstraint("user_id", "contact_id", name="unique_user_contact"),)
 
-    # Relationships
+    # Relationships with User
     user = relationship("User", foreign_keys=[user_id], back_populates="contacts")
-    contact = relationship("User", foreign_keys=[contact_id])
+    contact = relationship("User", foreign_keys=[contact_id], back_populates="reverse_contacts")

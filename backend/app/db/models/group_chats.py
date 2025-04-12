@@ -29,7 +29,7 @@ class GroupMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     group_id = Column(Integer, ForeignKey("group_chats.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    role = Column(String, default=MemberRole.MEMBER.value)
+    role = Column(Enum(MemberRole), default=MemberRole.MEMBER.value)
     joined_at = Column(DateTime, default=datetime.utcnow)
     
     # Relationships

@@ -12,7 +12,7 @@ import os
 from dotenv import load_dotenv
 
 # Import all models to avoid circular reference issues
-from app.db.models import BlogPost, User, PostComment, ChatMessage
+from app.db.models import BlogPost, User, PostComment, ChatMessage, Contact
 
 # Load environment variables
 load_dotenv()
@@ -68,9 +68,29 @@ def deliver_message_task(self, message_data):
             
             # Store in database with explicit transaction
             stored_message = store_message(db, message_schema)
+            message_id = stored_message.id
             
-            logger.info(f"Message saved with ID: {stored_message.id} in the database")
-            return stored_message.id
+            logger.info(f"Message saved with ID: {message_id} in the database")
+            
+            # Check if receiver is online by querying Redis
+            try:
+                from app.services.redis_service import RedisService
+                redis_service = RedisService()
+                
+                # Check if receiver is in active users set in Redis
+                is_receiver_online = redis_service.redis_client.sismember("active_users", receiver_id)
+                
+                if is_receiver_online:
+                    logger.info(f"Receiver {receiver_id} is online. Marking message as delivered.")
+                    stored_message.delivered = True
+                    db.commit()
+                    logger.info(f"Message {message_id} marked as delivered in the database")
+                else:
+                    logger.info(f"Receiver {receiver_id} is offline. Message will remain undelivered.")
+            except Exception as redis_error:
+                logger.error(f"Error checking receiver status: {str(redis_error)}")
+                
+            return message_id
         except Exception as schema_error:
             logger.error(f"Error creating message schema: {str(schema_error)}")
             logger.error(traceback.format_exc())

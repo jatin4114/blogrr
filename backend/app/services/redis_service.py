@@ -3,7 +3,7 @@ import json
 import logging
 import redis
 import traceback
-from typing import Dict, Any, Union, List, Optional
+from typing import Dict, Any, Union, List, Optional, Set
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
@@ -204,10 +204,16 @@ class RedisService:
             return False
     
     def is_user_connected(self, user_id: int) -> bool:
-        """Check if a user is connected to any server"""
+        """Check if a user is connected to any server with validation"""
         try:
-            key = f"connected:{user_id}"
-            return bool(self.redis_client.exists(key))
+            # Check for activity key first (has TTL)
+            if not self.redis_client.exists(f"user_active:{user_id}"):
+                # If key doesn't exist, ensure user is removed from active_users set
+                self.redis_client.srem("active_users", user_id)
+                return False
+                
+            # Then check active_users set
+            return bool(self.redis_client.sismember("active_users", user_id))
         except Exception as e:
             logger.error(f"Error checking if user is connected: {str(e)}")
             return False
@@ -400,3 +406,46 @@ class RedisService:
         except Exception as e:
             logger.error(f"Error clearing user data: {str(e)}")
             return False
+    
+    def add_user_to_active_users(self, user_id: int, ttl: int = 3600):
+        """Add a user to the active users set with TTL"""
+        self.redis_client.sadd("active_users", user_id)
+        # Use a separate key with TTL for activity tracking
+        self.redis_client.set(f"user_active:{user_id}", "1", ex=ttl)
+        logger.info(f"Added user {user_id} to active users with {ttl}s TTL")
+
+    def remove_user_from_active_users(self, user_id: int):
+        """Remove a user from the active users set"""
+        self.redis_client.srem("active_users", user_id)
+        self.redis_client.delete(f"user_active:{user_id}")
+        logger.info(f"Removed user {user_id} from active users")
+
+    def clean_stale_users(self) -> int:
+        """Clean stale users from active_users set"""
+        try:
+            cleaned_count = 0
+            active_users = self.redis_client.smembers("active_users")
+            for user_id in active_users:
+                if not self.redis_client.exists(f"user_active:{user_id}"):
+                    self.redis_client.srem("active_users", user_id)
+                    cleaned_count += 1
+            return cleaned_count
+        except Exception as e:
+            logger.error(f"Error cleaning stale users: {str(e)}")
+            return 0
+
+    def get_active_users(self) -> Set[int]:
+        """Get all active users with validation"""
+        try:
+            active_users = set()
+            for user_id in self.redis_client.smembers("active_users"):
+                # Verify each user has a valid activity key
+                if self.redis_client.exists(f"user_active:{int(user_id)}"):
+                    active_users.add(int(user_id))
+                else:
+                    # Clean up stale user from set
+                    self.redis_client.srem("active_users", user_id)
+            return active_users
+        except Exception as e:
+            logger.error(f"Error getting active users: {str(e)}")
+            return set()

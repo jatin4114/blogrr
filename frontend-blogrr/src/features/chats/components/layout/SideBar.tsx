@@ -5,7 +5,7 @@ import ContactItem from "../chat/ContactItem";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setActiveChatId } from "../../store/slices/ChatSlice";
-
+import Topbar from "@/shared/ui/topbar/Topbar";
 const SideBar = () => {
   const dispatch = useDispatch();
   const contacts = useSelector((state: RootState) => state.contacts.list);
@@ -17,8 +17,10 @@ const SideBar = () => {
   // Show the container if loading or query is non-empty
   const showSearchResults = loading || query.trim().length > 0;
 
-  return (
+  return ( 
+    
     <aside className="w-1/4 min-w-[250px] border-r border-gray-200 flex flex-col h-full">
+      
       <div className="p-4 border-b border-gray-100">
         <SearchBar />
       </div>

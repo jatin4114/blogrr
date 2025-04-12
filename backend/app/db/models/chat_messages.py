@@ -12,8 +12,7 @@ class ChatMessage(Base):
     message = Column(String, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     delivered = Column(Boolean, default=False, index=True)
-    
-    # Use string references for relationships to avoid circular imports
-    # Format: "ClassName" instead of direct class reference
+    read = Column(Boolean, default=False, index=True)
+
     sender = relationship("User", foreign_keys=[sender_id], back_populates="sent_messages")
     receiver = relationship("User", foreign_keys=[receiver_id], back_populates="received_messages")

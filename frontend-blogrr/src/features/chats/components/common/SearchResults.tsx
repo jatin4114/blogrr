@@ -36,7 +36,7 @@ export default function SearchResults() {
       const token = localStorage.getItem('token');
       await axios.post(
         `http://localhost:8000/users/add_contact`,
-        { contact_id: parseInt(userIdStr) }, // Ensure contact_id is an integer
+        { contact_id: parseInt(userIdStr) }, // Ensure `contact_id` is an integer
         {
           headers: {
             'Content-Type': 'application/json',

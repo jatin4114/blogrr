@@ -2,7 +2,7 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'ws://localhost:8000/ws/mu
 
 // Define message handler type
 type MessageHandler = (event: MessageEvent) => void;
-type MessageType = 'direct' | 'group' | 'system' | 'error' | 'heartbeat' | 'typing_start' | 'typing_stop' | 'auth';
+type MessageType = 'direct_message' | 'group' |'read_receipt'| 'system' | 'error' | 'heartbeat' | 'typing' | 'auth' | 'presence';
 
 // Message structure for sending
 interface SocketMessage {
@@ -131,7 +131,7 @@ class WebSocketService {
   }
 
   /**
-   * Create a new WebSocket connection with the stored token
+   * Connect a WebSocket and add authentication information
    */
   connect(): void {
     // Don't proceed if already connecting or connected
@@ -154,10 +154,8 @@ class WebSocketService {
     try {
       console.log('Creating new WebSocket connection');
       
-      // Properly encode token for URL
-      const encodedToken = encodeURIComponent(token);
-      // Replace the {user_id} placeholder with the actual userId
-      const url = `${SOCKET_URL.replace("{user_id}", userId)}?token=${encodedToken}`;
+      // Use the multiplexer endpoint which provides improved delivery status tracking
+      const url = `${SOCKET_URL}`;
       console.log('Connecting to WebSocket URL:', url);
       
       this.socket = new WebSocket(url);
@@ -254,6 +252,14 @@ class WebSocketService {
     }
 
     try {
+      // Add timestamp to all outgoing messages if not already present
+      if (!message.timestamp) {
+        message.timestamp = new Date().toISOString();
+      }
+      
+      // Log all outgoing messages
+      console.log('📤 Sending WebSocket message:', message);
+      
       this.socket.send(JSON.stringify(message));
       return true;
     } catch (error) {
@@ -272,11 +278,32 @@ class WebSocketService {
     const token = this.getToken();
     const userId = localStorage.getItem('userId') || '';
     if (token && userId) {
-      this.sendMessage({
-        type: 'auth',
-        token: token,
-        user_id: userId
-      });
+      // Send initial auth message - use the proper format expected by the multiplexer
+      if (token.length > 20) {
+        // Looks like a JWT token
+        this.sendMessage({
+          token: token,
+          type: "auth"
+        });
+      } else {
+        // Might be a development mode direct user_id
+        this.sendMessage({
+          user_id: parseInt(userId, 10),
+          type: "auth"
+        });
+      }
+      
+      // Also send presence update to let server know user is online
+      setTimeout(() => {
+        this.sendMessage({
+          type: 'presence',
+          content: {
+            status: 'online'
+          }
+        });
+        console.log('Presence update sent to WebSocket');
+      }, 500);
+      
       console.log('Authentication message sent to WebSocket');
     } else {
       console.error('Cannot authenticate: missing token or user ID');
@@ -339,19 +366,20 @@ class WebSocketService {
     try {
       const data = JSON.parse(event.data);
       
-      // Log only non-heartbeat messages to avoid console spam
-      if (data.type !== 'heartbeat') {
-        console.log('WebSocket message received:', data);
-      }
+      // Log all incoming messages for debugging
+      console.log('🔔 WebSocket raw message received:', data);
       
       // Special handling for system messages
-      if (data.type === 'system' && data.message === 'Authentication failed') {
-        console.error('WebSocket authentication failed');
-        // Potentially trigger logout here
+      if (data.type === 'system') {
+        console.log('System message received:', data.message);
         return;
       }
       
-      // Notify all handlers
+      // Notify all handlers with raw event
+      if (this.messageHandlers.length === 0) {
+        console.warn('No message handlers registered to process this message');
+      }
+      
       this.messageHandlers.forEach(handler => {
         try {
           handler(event);
@@ -360,7 +388,7 @@ class WebSocketService {
         }
       });
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
+      console.error('Error parsing WebSocket message:', error, event.data);
     }
   }
 

@@ -205,6 +205,24 @@ async def startup_event():
         print("WARNING: Redis connection failed - Celery tasks will not be processed")
     except Exception as e:
         print(f"Error initializing Celery: {str(e)}")
+    
+    # Clean Redis active users data on server startup
+    try:
+        from app.services.redis_service import RedisService
+        redis_service = RedisService()
+        
+        # Option 1: Completely clear active users (safer but will disconnect everyone)
+        redis_service.redis_client.delete("active_users")
+        
+        # Option 2: Clean only stale connections
+        active_users = redis_service.redis_client.smembers("active_users")
+        for user_id in active_users:
+            # Delete each user's activity key
+            redis_service.redis_client.delete(f"user_active:{user_id}")
+        
+        print("Redis active users data cleaned up on server startup")
+    except Exception as e:
+        print(f"Error cleaning Redis data: {str(e)}")
 
 @app.options("/{path:path}")
 async def options_handler(request: Request):

@@ -15,6 +15,8 @@ from datetime import datetime
 import uuid
 from pydantic import BaseModel, validator
 import time
+from .users import User
+
 
 # Import services
 from app.services.chat_messages_service import store_message, get_undelivered_messages, mark_messages_as_delivered
@@ -76,6 +78,8 @@ async def test_multiplexer_connection():
     }
 
 # Connection manager for the multiplexer
+from app.services.redis_service import RedisService
+
 class MultiplexerManager:
     def __init__(self):
         self.active_connections: Dict[int, WebSocket] = {}
@@ -83,6 +87,8 @@ class MultiplexerManager:
         self.presence_status: Dict[int, str] = {}  # Tracks user presence (online, away, offline)
         self.typing_status: Dict[str, Dict[int, float]] = {}  # Tracks typing indicators with timestamps
         self.last_activity: Dict[int, float] = {}  # For heartbeat tracking
+        self.redis_service = RedisService()  # Redis service for tracking active users
+        self.ACTIVE_USER_TTL = 60 * 60  # 1 hour expiration for active users
         
     async def connect(self, websocket: WebSocket, user_id: int):
         """Connect a user and initialize their subscriptions and presence"""
@@ -90,7 +96,12 @@ class MultiplexerManager:
         self.user_subscriptions[user_id] = set()
         self.presence_status[user_id] = "online"
         self.last_activity[user_id] = time.time()
-        logger.info(f"User {user_id} connected to multiplexer. Active connections: {len(self.active_connections)}")
+
+        # Mark user as connected in Redis with expiration
+        self.redis_service.redis_client.sadd("active_users", user_id)
+        # Set expiration on user's connection key separately (since sets don't support per-member expiry)
+        self.redis_service.redis_client.set(f"user_active:{user_id}", "1", ex=self.ACTIVE_USER_TTL)
+        logger.info(f"User {user_id} connected. Active users: {self.get_active_users()}")
     
     def disconnect(self, user_id: int):
         """Disconnect a user and clean up their subscriptions"""
@@ -114,104 +125,77 @@ class MultiplexerManager:
             # Remove empty chats
             if not self.typing_status[chat_id]:
                 del self.typing_status[chat_id]
-                
-        logger.info(f"User {user_id} disconnected from multiplexer. Remaining connections: {len(self.active_connections)}")
-    
-    def subscribe_to_group(self, user_id: int, group_id: int):
-        """Subscribe a user to a group channel"""
-        if user_id in self.user_subscriptions:
-            channel = f"group:{group_id}"
-            self.user_subscriptions[user_id].add(channel)
-            logger.info(f"User {user_id} subscribed to group {group_id}")
-            return True
-        return False
-    
-    def unsubscribe_from_group(self, user_id: int, group_id: int):
-        """Unsubscribe a user from a group channel"""
-        if user_id in self.user_subscriptions:
-            channel = f"group:{group_id}"
-            if channel in self.user_subscriptions[user_id]:
-                self.user_subscriptions[user_id].remove(channel)
-                logger.info(f"User {user_id} unsubscribed from group {group_id}")
-                return True
-        return False
-    
-    def update_presence(self, user_id: int, status: str):
-        """Update a user's presence status"""
-        valid_statuses = ["online", "away", "offline", "busy"]
-        if status not in valid_statuses:
-            return False
-            
-        self.presence_status[user_id] = status
-        self.last_activity[user_id] = time.time()
-        logger.info(f"User {user_id} presence updated to {status}")
-        return True
-    
-    def update_typing(self, chat_type: str, chat_id: Union[int, str], user_id: int, is_typing: bool):
-        """Update typing indicator for a user in a specific chat"""
-        # Construct a chat identifier that distinguishes between direct and group chats
-        identifier = f"{chat_type}:{chat_id}"
-        
-        if is_typing:
-            # Initialize dict for this chat if needed
-            if identifier not in self.typing_status:
-                self.typing_status[identifier] = {}
-                
-            # Set typing timestamp
-            self.typing_status[identifier][user_id] = time.time()
-        else:
-            # Remove typing indicator
-            if identifier in self.typing_status and user_id in self.typing_status[identifier]:
-                del self.typing_status[identifier][user_id]
-                
-                # Remove empty chats
-                if not self.typing_status[identifier]:
-                    del self.typing_status[identifier]
-        
-        return True
-    
-    def get_typing_users(self, chat_type: str, chat_id: Union[int, str]) -> List[int]:
-        """Get list of users currently typing in a specific chat"""
-        identifier = f"{chat_type}:{chat_id}"
-        
-        if identifier not in self.typing_status:
-            return []
-            
-        # Filter out expired typing indicators (older than 5 seconds)
-        current_time = time.time()
-        active_typers = [
-            user_id for user_id, timestamp in self.typing_status[identifier].items()
-            if current_time - timestamp < 5  # 5-second expiry
-        ]
-        
-        # Clean up expired entries
-        for user_id in list(self.typing_status[identifier].keys()):
-            if current_time - self.typing_status[identifier][user_id] >= 5:
-                del self.typing_status[identifier][user_id]
-                
-        # Remove empty chats
-        if not self.typing_status[identifier]:
-            del self.typing_status[identifier]
-            
-        return active_typers
-    
-    def update_activity(self, user_id: int):
-        """Update user's last activity timestamp (for heartbeat)"""
-        self.last_activity[user_id] = time.time()
+
+        # Remove user from Redis active users
+        self.redis_service.redis_client.srem("active_users", user_id)
+        # Delete connection key
+        self.redis_service.redis_client.delete(f"user_active:{user_id}")
+        logger.info(f"User {user_id} disconnected. Active users: {self.get_active_users()}")
     
     def is_connected(self, user_id: int) -> bool:
         """Check if a user is connected"""
-        return user_id in self.active_connections
+        # First check Redis for active users
+        if not self.redis_service.redis_client.exists(f"user_active:{user_id}"):
+            # If key doesn't exist, ensure user is removed from active_users set
+            self.redis_service.redis_client.srem("active_users", user_id)
+            return False
+            
+        is_connected = self.redis_service.redis_client.sismember("active_users", user_id)
+        # Refresh the TTL when checking
+        if is_connected:
+            self.redis_service.redis_client.expire(f"user_active:{user_id}", self.ACTIVE_USER_TTL)
+        logger.debug(f"Checking connection status for user {user_id}: {'Connected' if is_connected else 'Not connected'}")
+        return is_connected
+
+    def get_active_users(self) -> Set[int]:
+        """Get the list of active users from Redis with validation"""
+        active_users = set()
+        for user_id in self.redis_service.redis_client.smembers("active_users"):
+            # Verify each user has a valid activity key
+            if self.redis_service.redis_client.exists(f"user_active:{int(user_id)}"):
+                active_users.add(int(user_id))
+            else:
+                # Clean up stale user from set
+                self.redis_service.redis_client.srem("active_users", user_id)
+                logger.info(f"Removed stale user {user_id} from active users set")
+        return active_users
     
+    async def clean_stale_connections(self):
+        """Clean up stale connections"""
+        logger.info("Cleaning stale connections")
+        active_users = self.redis_service.redis_client.smembers("active_users")
+        for user_id in active_users:
+            # Check if user has valid activity key
+            if not self.redis_service.redis_client.exists(f"user_active:{user_id}"):
+                self.redis_service.redis_client.srem("active_users", user_id)
+                logger.info(f"Removed stale user {user_id} from active users set during cleanup")
+        
+        # Check active_connections for consistency
+        for user_id in list(self.active_connections.keys()):
+            if not self.is_connected(user_id):
+                logger.info(f"Removing inconsistent active connection for user {user_id}")
+                if user_id in self.active_connections:
+                    del self.active_connections[user_id]
+        
+        logger.info(f"After cleanup: {len(self.active_connections)} active connections")
+    
+    async def start_periodic_cleanup(self):
+        """Start periodic cleanup of stale connections"""
+        while True:
+            await self.clean_stale_connections()
+            await asyncio.sleep(300)  # Run every 5 minutes
+
     async def send_to_user(self, user_id: int, message: Dict) -> bool:
         """Send a message to a specific user"""
-        if user_id in self.active_connections:
+        if self.is_connected(user_id):
             try:
                 await self.active_connections[user_id].send_json(message)
+                logger.info(f"Message sent to user {user_id}: {message}")
                 return True
             except Exception as e:
                 logger.error(f"Error sending message to user {user_id}: {str(e)}")
                 return False
+        logger.warning(f"Attempted to send message to user {user_id}, but they are not connected.")
         return False
     
     async def broadcast_to_users(self, user_ids: List[int], message: Dict) -> Dict[int, bool]:
@@ -237,8 +221,67 @@ class MultiplexerManager:
         
         await self.broadcast_to_users(users_to_notify, presence_msg)
 
+    def update_activity(self, user_id: int):
+        """Update the last activity timestamp for a user"""
+        if user_id in self.last_activity:
+            self.last_activity[user_id] = time.time()
+            logger.debug(f"Updated last activity for user {user_id}: {self.last_activity[user_id]}")
+        else:
+            logger.warning(f"Attempted to update activity for non-existent user {user_id}")
+
+    def update_presence(self, user_id: int, status: str):
+        """Update the presence status for a user"""
+        valid_statuses = ["online", "away", "busy", "offline"]
+        if status not in valid_statuses:
+            logger.warning(f"Invalid presence status '{status}' for user {user_id}")
+            return
+
+        if user_id in self.presence_status:
+            self.presence_status[user_id] = status
+            logger.info(f"Updated presence for user {user_id}: {status}")
+        else:
+            logger.warning(f"Attempted to update presence for non-existent user {user_id}")
+
+    def update_typing(self, chat_type: str, chat_id: str, user_id: int, is_typing: bool):
+        """Update typing status for a user in a specific chat"""
+        key = f"{chat_type}:{chat_id}"
+        if key not in self.typing_status:
+            self.typing_status[key] = {}
+
+        if is_typing:
+            # Update the typing timestamp
+            self.typing_status[key][user_id] = time.time()
+            logger.info(f"User {user_id} is typing in {key}")
+        else:
+            # Remove the user from typing status
+            if user_id in self.typing_status[key]:
+                del self.typing_status[key][user_id]
+                logger.info(f"User {user_id} stopped typing in {key}")
+
+            # Clean up empty entries
+            if not self.typing_status[key]:
+                del self.typing_status[key]
+
+    def log_active_users(self):
+        """Log the currently active user IDs"""
+        active_users = self.get_active_users()
+        logger.info(f"Currently active user IDs: {list(active_users)}")
+
+    async def start_logging_active_users(self):
+        """Periodically log active user IDs"""
+        while True:
+            self.log_active_users()
+            await asyncio.sleep(60)  # Log every 60 seconds
+
 # Initialize manager
 multiplexer = MultiplexerManager()
+
+# Start periodic logging and cleanup
+asyncio.create_task(multiplexer.start_logging_active_users())
+asyncio.create_task(multiplexer.start_periodic_cleanup())
+
+# Add a startup cleanup to run immediately
+asyncio.create_task(multiplexer.clean_stale_connections())
 
 # Pydantic model for Message validation
 class MultiplexedMessage(BaseModel):
@@ -693,8 +736,9 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
             "status": "sent"
         })
         
-        # Try to deliver to receiver if online
+        # Check if the receiver is online
         if multiplexer.is_connected(receiver_id):
+            logger.info(f"Receiver {receiver_id} is online. Delivering message immediately.")
             success = await multiplexer.send_to_user(receiver_id, {
                 "type": "direct_message",
                 "message_id": str(server_message_id),
@@ -704,17 +748,49 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
                 "timestamp": current_time.isoformat()
             })
             
-            # If message was delivered and we have direct DB access, mark as delivered
-            if success and stored_message:
+            # Log delivery status
+            if success:
+                logger.info(f"Message {server_message_id} successfully delivered to user {receiver_id}")
+                # Mark the message as delivered in the database
                 try:
-                    transaction_in_progress = True
-                    stored_message.delivered = True
-                    db.commit()
-                    transaction_in_progress = False
+                    # If we don't have stored_message (e.g. using Celery), get it from the DB
+                    if not stored_message:
+                        # Try to get the actual message ID from Celery if it completed
+                        try:
+                            from app.tasks.chat_messages_tasks import deliver_message_task
+                            actual_msg_id = deliver_message_task.AsyncResult(server_message_id).get(timeout=1)
+                            if actual_msg_id and isinstance(actual_msg_id, int):
+                                logger.info(f"Retrieved actual message ID {actual_msg_id} from Celery result")
+                                stored_message = db.query(ChatMessage).get(actual_msg_id)
+                        except Exception as e:
+                            logger.error(f"Could not get message ID from Celery: {str(e)}")
+                    
+                    # If we still don't have stored_message, query by sender, receiver and timestamp
+                    if not stored_message:
+                        logger.info("Finding message in database to mark as delivered")
+                        stored_message = db.query(ChatMessage).filter(
+                            ChatMessage.sender_id == user_id,
+                            ChatMessage.receiver_id == receiver_id,
+                            ChatMessage.message == message_text,
+                            ChatMessage.delivered == False
+                        ).order_by(ChatMessage.timestamp.desc()).first()
+                        
+                    if stored_message:
+                        transaction_in_progress = True
+                        stored_message.delivered = True
+                        db.commit()
+                        transaction_in_progress = False
+                        logger.info(f"Message marked as delivered in the database: ID={stored_message.id}")
+                    else:
+                        logger.warning("Could not find message to mark as delivered")
                 except Exception as db_error:
                     if transaction_in_progress:
                         db.rollback()
                     logger.error(f"Failed to mark message as delivered: {str(db_error)}")
+            else:
+                logger.warning(f"Failed to deliver message {server_message_id} to user {receiver_id}")
+        else:
+            logger.info(f"Receiver {receiver_id} is offline. Message will remain undelivered.")
     except Exception as e:
         # Ensure any database transaction is rolled back when an error occurs
         if transaction_in_progress:
@@ -1543,3 +1619,78 @@ async def sync_group_messages(user_id: int, group_id: int, since_timestamp: str,
             "type": "error",
             "message": f"Failed to sync group messages: {str(e)}"
         })
+        
+@router.get("/multiplex/chat-history/{chat_id}")
+async def fetch_chat_history(
+    chat_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+    limit: int = 50,
+    offset: int = 0
+):
+    """
+    Fetch chat history for a specific chat (direct or group).
+    - `chat_id`: ID of the chat (user ID for direct chats or group ID for group chats).
+    - `limit`: Number of messages to fetch (default: 50).
+    - `offset`: Offset for pagination (default: 0).
+    """
+    try:
+        # Check if the chat is a direct chat or a group chat
+        is_group_chat = db.query(GroupChat).filter(GroupChat.id == chat_id).first()
+
+        if is_group_chat:
+            # Fetch group chat messages
+            messages = (
+                db.query(GroupMessage)
+                .filter(GroupMessage.group_id == chat_id)
+                .order_by(GroupMessage.timestamp.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            return {
+                "chat_type": "group",
+                "chat_id": chat_id,
+                "messages": [
+                    {
+                        "id": str(msg.id),
+                        "sender": str(msg.sender_id),
+                        "content": msg.message,
+                        "timestamp": int(msg.timestamp.timestamp() * 1000) if msg.timestamp else int(datetime.utcnow().timestamp() * 1000),
+                    }
+                    for msg in messages
+                ],
+            }
+        else:
+            # Fetch direct chat messages
+            messages = (
+                db.query(ChatMessage)
+                .filter(
+                    ((ChatMessage.sender_id == user.id) & (ChatMessage.receiver_id == chat_id))
+                    | ((ChatMessage.sender_id == chat_id) & (ChatMessage.receiver_id == user.id))
+                )
+                .order_by(ChatMessage.timestamp.desc())
+                .offset(offset)
+                .limit(limit)
+                .all()
+            )
+            return {
+                "chat_type": "direct",
+                "chat_id": chat_id,
+                "messages": [
+                    {
+                        "id": str(msg.id),
+                        "sender": str(msg.sender_id),
+                        "content": msg.message,
+                        "timestamp": int(msg.timestamp.timestamp() * 1000) if msg.timestamp else int(datetime.utcnow().timestamp() * 1000),
+                    }
+                    for msg in messages
+                ],
+            }
+    except Exception as e:
+        logger.error(f"Error fetching chat history: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch chat history",
+        )
