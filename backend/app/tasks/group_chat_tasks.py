@@ -64,22 +64,23 @@ def store_group_message_task(self, message_data):
         SessionFactory = sessionmaker(bind=engine)
         db = SessionFactory()
         
+        # Ensure we have a UTC timestamp
+        current_time = datetime.utcnow()
+        
         # Create message object from data
         message_schema = GroupMessageCreate(
             group_id=group_id,
             message=message_data.get('message')
         )
         
-        # Store in database
-        stored_message = store_group_message(db, message_schema, sender_id)
-        message_id = stored_message.id  # This is the actual database message ID (integer)
+        # Store in database with explicit UTC timestamp
+        stored_message = store_group_message(db, message_schema, sender_id, timestamp=current_time)
+        message_id = stored_message.id
         
-        logger.info(f"Group message saved with ID: {message_id}")
+        logger.info(f"Group message saved with ID: {message_id} at UTC time: {current_time.isoformat()}")
         
         # Trigger notification for offline members using the actual message ID
-        # Pass the actual database ID, not the task ID
         try:
-            # IMPORTANT: We use the actual message_id from the database, not self.request.id
             notify_offline_members_task.delay(group_id, message_id)
         except Exception as e:
             logger.error(f"Failed to queue notification task: {str(e)}")

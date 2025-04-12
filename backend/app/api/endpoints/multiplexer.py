@@ -22,6 +22,7 @@ from app.services.chat_messages_service import store_message, get_undelivered_me
 from app.services.group_chat_service import store_group_message, get_group_messages
 from app.schemas.chat_message_schema import ChatMessageSchema
 from app.schemas.group_chat_schema import GroupMessageCreate
+from app.utils.time_utils import TimeUtil
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -455,7 +456,7 @@ async def multiplexer_endpoint(websocket: WebSocket):
         await websocket.send_json({
             "type": "system",
             "message": f"Connected as {user.username} (ID: {user_id})",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": TimeUtil.to_iso(TimeUtil.now()),
             "server_time": time.time()  # For time synchronization
         })
         
@@ -474,7 +475,7 @@ async def multiplexer_endpoint(websocket: WebSocket):
                         "message_id": str(msg.id),
                         "sender_id": msg.sender_id,
                         "message": msg.message,
-                        "timestamp": msg.timestamp.isoformat() if msg.timestamp else None
+                        "timestamp": TimeUtil.to_iso(msg.timestamp) if msg.timestamp else None
                     })
                 
                 # Mark messages as delivered
@@ -547,7 +548,7 @@ async def multiplexer_endpoint(websocket: WebSocket):
                     await asyncio.sleep(30)  # 30-second heartbeat
                     await websocket.send_json({
                         "type": "heartbeat",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": TimeUtil.to_iso(TimeUtil.now()),
                         "server_time": time.time()
                     })
                     multiplexer.update_activity(user_id)
@@ -595,7 +596,7 @@ async def multiplexer_endpoint(websocket: WebSocket):
                         # Simple acknowledgment of heartbeat
                         await websocket.send_json({
                             "type": "heartbeat_ack",
-                            "timestamp": datetime.utcnow().isoformat(),
+                            "timestamp": TimeUtil.to_iso(TimeUtil.now()),
                             "server_time": time.time()
                         })
                     elif message_type == "sync":
@@ -649,7 +650,7 @@ async def multiplexer_endpoint(websocket: WebSocket):
                         "type": "presence",
                         "user_id": user.id,
                         "status": "offline",
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": TimeUtil.to_iso(TimeUtil.now())
                     })
                 except Exception as e:
                     logger.error(f"Error broadcasting offline status: {str(e)}")
@@ -674,7 +675,7 @@ async def multiplexer_endpoint(websocket: WebSocket):
 # Message handler functions
 async def handle_direct_message(message: Dict, user_id: int, db: Session, websocket: WebSocket):
     """Handle a direct message"""
-    # Add global statement to access module-level variableses
+    # Add global declaration to access module-level variables
     global deliver_message_task, CELERY_AVAILABLE
     
     transaction_in_progress = False
@@ -713,8 +714,8 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
             })
             return
             
-        # Create message schema
-        current_time = datetime.utcnow()
+        # Create message schema with TimeUtil for standardized timestamps
+        current_time = TimeUtil.now()
         message_schema = ChatMessageSchema(
             sender_id=user_id,
             receiver_id=receiver_id,
@@ -748,12 +749,12 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
             server_message_id = stored_message.id
             transaction_in_progress = False
             
-        # Send confirmation to sender
+        # Send confirmation to sender with ISO timestamp
         await websocket.send_json({
             "type": "confirmation",
             "message_id": client_message_id,
             "server_message_id": str(server_message_id),
-            "timestamp": current_time.isoformat(),
+            "timestamp": TimeUtil.to_iso(current_time),
             "status": "sent"
         })
         
@@ -766,7 +767,7 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
                 "client_message_id": client_message_id,
                 "sender_id": user_id,
                 "message": message_text,
-                "timestamp": current_time.isoformat()
+                "timestamp": TimeUtil.to_iso(current_time)
             })
             
             # Log delivery status
@@ -825,9 +826,6 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
 
 async def handle_group_message(message: Dict, user_id: int, db: Session, websocket: WebSocket):
     """Handle a group message"""
-    # Add global declaration here too for consistency
-    global CELERY_AVAILABLE, store_group_message_task, notify_offline_members_task, redis_service
-    
     transaction_in_progress = False
     try:
         # Extract message content
@@ -887,7 +885,7 @@ async def handle_group_message(message: Dict, user_id: int, db: Session, websock
         
         # Store message (either via Celery or directly)
         server_message_id = None
-        current_time = datetime.utcnow()
+        current_time = TimeUtil.now()
         
         if CELERY_AVAILABLE:
             try:
@@ -918,7 +916,7 @@ async def handle_group_message(message: Dict, user_id: int, db: Session, websock
             "type": "confirmation",
             "message_id": client_message_id,
             "server_message_id": str(server_message_id),
-            "timestamp": current_time.isoformat(),
+            "timestamp": TimeUtil.to_iso(current_time),
             "status": "sent"
         })
         
@@ -929,7 +927,7 @@ async def handle_group_message(message: Dict, user_id: int, db: Session, websock
             "group_id": group_id,
             "sender_id": user_id,
             "message": message_text,
-            "timestamp": current_time.isoformat()
+            "timestamp": TimeUtil.to_iso(current_time)
         }
         
         # Publish to Redis if available (for cross-server delivery)
@@ -1024,7 +1022,7 @@ async def handle_typing_indicator(message: Dict, user_id: int, websocket: WebSoc
                     "chat_type": "direct",
                     "chat_id": str(user_id),  # From their perspective, the chat_id is the sender's ID
                     "is_typing": is_typing,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": TimeUtil.to_iso(TimeUtil.now())
                 })
                 
         # For group chats, publish to Redis if available
@@ -1037,7 +1035,7 @@ async def handle_typing_indicator(message: Dict, user_id: int, websocket: WebSoc
                     "chat_type": "group",
                     "chat_id": chat_id,
                     "is_typing": is_typing,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": TimeUtil.to_iso(TimeUtil.now())
                 })
             except Exception as redis_error:
                 logger.error(f"Redis publication failed for typing indicator: {str(redis_error)}")
@@ -1088,7 +1086,7 @@ async def handle_presence_update(message: Dict, user_id: int, websocket: WebSock
         await websocket.send_json({
             "type": "presence_update",
             "status": status,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": TimeUtil.to_iso(TimeUtil.now())
         })
         
         # Broadcast to other users via Redis if available
@@ -1098,7 +1096,7 @@ async def handle_presence_update(message: Dict, user_id: int, websocket: WebSock
                     "type": "presence",
                     "user_id": user_id,
                     "status": status,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": TimeUtil.to_iso(TimeUtil.now())
                 })
             except Exception as redis_error:
                 logger.error(f"Redis publication failed for presence: {str(redis_error)}")
@@ -1172,7 +1170,7 @@ async def handle_read_receipt(message: Dict, user_id: int, db: Session, websocke
                 await websocket.send_json({
                     "type": "read_receipt_confirmation",
                     "message_id": message_id,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": TimeUtil.to_iso(TimeUtil.now())
                 })
                 
                 # Notify the sender if they're online
@@ -1181,7 +1179,7 @@ async def handle_read_receipt(message: Dict, user_id: int, db: Session, websocke
                         "type": "read_receipt",
                         "message_id": message_id,
                         "reader_id": user_id,
-                        "timestamp": datetime.utcnow().isoformat()
+                        "timestamp": TimeUtil.to_iso(TimeUtil.now())
                     })
             else:
                 await websocket.send_json({
@@ -1277,7 +1275,7 @@ async def handle_subscription(message: Dict, user_id: int, db: Session, websocke
         await websocket.send_json({
             "type": "subscription_confirmation",
             "group_id": group_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": TimeUtil.to_iso(TimeUtil.now())
         })
         
         # Fetch recent messages (last 20)
@@ -1301,7 +1299,7 @@ async def handle_subscription(message: Dict, user_id: int, db: Session, websocke
                     "group_id": msg.group_id,
                     "sender_id": msg.sender_id,
                     "message": msg.message,
-                    "timestamp": msg.timestamp.isoformat() if msg.timestamp else None
+                    "timestamp": TimeUtil.to_iso(msg.timestamp) if msg.timestamp else None
                 })
         except Exception as history_error:
             logger.error(f"Error fetching group history: {str(history_error)}")
@@ -1366,7 +1364,7 @@ async def handle_unsubscription(message: Dict, user_id: int, pubsub, websocket: 
         await websocket.send_json({
             "type": "unsubscription_confirmation",
             "group_id": group_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": TimeUtil.to_iso(TimeUtil.now())
         })
         
     except Exception as e:
@@ -1494,7 +1492,7 @@ async def sync_direct_messages(user_id: int, contact_id: int, since_timestamp: s
                 "sender_id": msg.sender_id,
                 "receiver_id": msg.receiver_id,
                 "message": msg.message,
-                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                "timestamp": TimeUtil.to_iso(msg.timestamp) if msg.timestamp else None,
                 "delivered": msg.delivered,
                 "read": getattr(msg, 'read', False)
             })
@@ -1504,7 +1502,7 @@ async def sync_direct_messages(user_id: int, contact_id: int, since_timestamp: s
             "type": "sync_complete",
             "sync_type": "direct",
             "contact_id": contact_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": TimeUtil.to_iso(TimeUtil.now())
         })
         
     except Exception as e:
@@ -1555,7 +1553,7 @@ async def sync_all_contacts(user_id: int, since_timestamp: str, limit: int, db: 
                 "sender_id": msg.sender_id,
                 "receiver_id": msg.receiver_id,
                 "message": msg.message,
-                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None,
+                "timestamp": TimeUtil.to_iso(msg.timestamp) if msg.timestamp else None,
                 "delivered": msg.delivered,
                 "read": getattr(msg, 'read', False)
             })
@@ -1564,7 +1562,7 @@ async def sync_all_contacts(user_id: int, since_timestamp: str, limit: int, db: 
         await websocket.send_json({
             "type": "sync_complete",
             "sync_type": "all_contacts",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": TimeUtil.to_iso(TimeUtil.now())
         })
         
     except Exception as e:
@@ -1625,7 +1623,7 @@ async def sync_group_messages(user_id: int, group_id: int, since_timestamp: str,
                 "group_id": msg.group_id,
                 "sender_id": msg.sender_id,
                 "message": msg.message,
-                "timestamp": msg.timestamp.isoformat() if msg.timestamp else None
+                "timestamp": TimeUtil.to_iso(msg.timestamp) if msg.timestamp else None
             })
             
         # Send sync complete marker
@@ -1633,7 +1631,7 @@ async def sync_group_messages(user_id: int, group_id: int, since_timestamp: str,
             "type": "sync_complete",
             "sync_type": "group",
             "group_id": group_id,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": TimeUtil.to_iso(TimeUtil.now())
         })
         
     except Exception as e:

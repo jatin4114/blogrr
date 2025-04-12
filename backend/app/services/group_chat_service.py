@@ -4,11 +4,13 @@ from fastapi import HTTPException
 import logging
 from typing import List, Dict, Any, Optional
 import traceback
+from datetime import datetime
 
 from app.db.models.group_chats import GroupChat, GroupMember, GroupMessage, MemberRole
 from app.db.models.users import User
 from app.schemas.group_chat_schema import GroupChatCreate, GroupMessageCreate, GroupMemberCreate
 from app.services.redis_service import RedisService
+from app.utils.time_utils import TimeUtil
 
 logger = logging.getLogger(__name__)
 redis_service = RedisService()
@@ -217,8 +219,8 @@ def update_member_role(db: Session, group_id: int, user_id: int, new_role: str, 
     db.refresh(member_to_update)
     return member_to_update
 
-def store_group_message(db: Session, message_data: GroupMessageCreate, sender_id: int) -> GroupMessage:
-    """Store a message in the group chat"""
+def store_group_message(db: Session, message_data: GroupMessageCreate, sender_id: int, timestamp=None) -> GroupMessage:
+    """Store a message in the group chat with explicit timestamp control"""
     # Check if sender is a member of the group
     member = db.query(GroupMember).filter(
         GroupMember.group_id == message_data.group_id,
@@ -228,11 +230,15 @@ def store_group_message(db: Session, message_data: GroupMessageCreate, sender_id
     if not member:
         raise HTTPException(status_code=403, detail="You are not a member of this group")
     
-    # Create the message
+    # Use TimeUtil to normalize the timestamp
+    normalized_timestamp = TimeUtil.datetime_for_db(timestamp)
+    
+    # Create the message with UTC timestamp
     new_message = GroupMessage(
         group_id=message_data.group_id,
         sender_id=sender_id,
-        message=message_data.message
+        message=message_data.message,
+        timestamp=normalized_timestamp
     )
     
     try:
@@ -240,7 +246,7 @@ def store_group_message(db: Session, message_data: GroupMessageCreate, sender_id
         db.commit()
         db.refresh(new_message)
         
-        # Publish to Redis for real-time delivery
+        # Publish to Redis for real-time delivery with ISO formatted timestamp
         redis_channel = f"group:{message_data.group_id}"
         redis_message = {
             "type": "group_message",
@@ -248,7 +254,7 @@ def store_group_message(db: Session, message_data: GroupMessageCreate, sender_id
             "group_id": new_message.group_id,
             "sender_id": new_message.sender_id,
             "message": new_message.message,
-            "timestamp": new_message.timestamp.isoformat()
+            "timestamp": TimeUtil.to_iso(new_message.timestamp)
         }
         redis_service.publish_message(redis_channel, redis_message)
         

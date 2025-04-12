@@ -4,6 +4,67 @@ import { useAppDispatch } from '@/store/store';
 import { RootState } from '@/store/store';
 import { fetchChatHistory, markMessagesAsRead } from '@/features/chats/store/slices/ChatSlice';
 
+// Enhanced helper for formatting message timestamps with timezone support
+const formatMessageTime = (timestamp: number) => {
+  if (!timestamp) return '';
+  
+  try {
+    const messageDate = new Date(timestamp);
+    
+    // Check if the date is valid
+    if (isNaN(messageDate.getTime())) {
+      console.error("Invalid timestamp:", timestamp);
+      return '';
+    }
+    
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    // Check if the date is today
+    const isToday = messageDate.toDateString() === now.toDateString();
+    // Check if the date is yesterday
+    const isYesterday = messageDate.toDateString() === yesterday.toDateString();
+    // Check if the date is in the current year
+    const isCurrentYear = messageDate.getFullYear() === now.getFullYear();
+    
+    // Format based on how recent the message is
+    if (isToday) {
+      return messageDate.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    } else if (isYesterday) {
+      return `Yesterday, ${messageDate.toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      })}`;
+    } else if (isCurrentYear) {
+      return messageDate.toLocaleDateString([], { 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } else {
+      return messageDate.toLocaleDateString([], { 
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
+    return '';
+  }
+};
+
 export default function MessagesContainer() {
   const dispatch = useAppDispatch();
   const activeChatId = useSelector((state: RootState) => state.chat.activeChatId);
@@ -82,9 +143,14 @@ export default function MessagesContainer() {
           >
             {msg.content}
             
+            {/* Add timestamp display */}
+            <div className="text-xs opacity-70 mt-1">
+              {formatMessageTime(msg.timestamp)}
+            </div>
+            
             {/* Show delivery status for sent messages, with null checks */}
             {isSentByMe && (
-              <div className="text-xs opacity-70 text-right mt-1">
+              <div className="text-xs opacity-70 text-right">
                 {status && status.error ? (
                   <span className="text-red-300">Failed ⚠️</span>
                 ) : status && status.read ? (

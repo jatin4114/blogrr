@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 import os
 from dotenv import load_dotenv
+from app.utils.time_utils import TimeUtil
 
 # Import all models to avoid circular reference issues
 from app.db.models import BlogPost, User, PostComment, ChatMessage, Contact
@@ -56,18 +57,25 @@ def deliver_message_task(self, message_data):
         # Create a new session from the factory
         db = SessionFactory()
         
-        # Process timestamp
-        if "timestamp" in message_data and isinstance(message_data["timestamp"], str):
-            try:
-                # Try to parse ISO format timestamp
-                message_data["timestamp"] = datetime.fromisoformat(message_data["timestamp"].replace('Z', '+00:00'))
-            except Exception as e:
-                logger.warning(f"Failed to parse timestamp {message_data['timestamp']}: {str(e)}")
-                message_data["timestamp"] = datetime.utcnow()
-        
-        # Always ensure we have a timestamp
-        if "timestamp" not in message_data or not message_data["timestamp"]:
-            message_data["timestamp"] = datetime.utcnow()
+        # Normalize timestamp using the TimeUtil
+        if "timestamp" in message_data:
+            if isinstance(message_data["timestamp"], str):
+                # Parse and normalize using TimeUtil
+                parsed_timestamp = TimeUtil.parse_timestamp(message_data["timestamp"])
+                if parsed_timestamp:
+                    message_data["timestamp"] = TimeUtil.datetime_for_db(parsed_timestamp)
+                    logger.info(f"Normalized timestamp to UTC: {TimeUtil.to_iso(parsed_timestamp)}")
+                else:
+                    # Use current UTC time if parsing fails
+                    message_data["timestamp"] = TimeUtil.datetime_for_db()
+                    logger.info(f"Using current UTC time: {TimeUtil.to_iso(message_data['timestamp'])}")
+            else:
+                # Convert any datetime object to proper UTC
+                message_data["timestamp"] = TimeUtil.datetime_for_db(message_data["timestamp"])
+        else:
+            # Always ensure we have a UTC timestamp
+            message_data["timestamp"] = TimeUtil.datetime_for_db()
+            logger.info(f"No timestamp provided, using current UTC time: {TimeUtil.to_iso(message_data['timestamp'])}")
         
         # Set delivered status to False explicitly
         message_data["delivered"] = False

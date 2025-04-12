@@ -1,5 +1,5 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import { addMessage } from '@/features/chats/store/slices/ChatSlice';
 import { RootState } from '@/store/store';
 import { webSocketService } from '@/features/chats/services/socket';
@@ -19,23 +19,31 @@ export default function MessageInput() {
     
     setIsSending(true);
 
+    // Generate unique ID for the message
     const messageId = crypto.randomUUID();
+    
+    // Current time as numeric timestamp for UI
+    const currentTime = Date.now();
+    
+    // Create the message object for local state
     const msg = {
       id: messageId,
       sender: userId,
       content: input,
-      timestamp: Date.now(),
-      delivered: false, // Will be updated when confirmed
+      timestamp: currentTime,
+      delivered: false,
       read: false,
     };
 
     // Send message via WebSocket using multiplexer format
+    // Use RFC 3339 / ISO 8601 format with timezone information for server
     webSocketService.sendMessage({
       type: 'direct_message',
       content: {
         message: input,
         receiver_id: parseInt(chatId, 10),
-        message_id: messageId // Include client message ID for tracking
+        message_id: messageId, 
+        timestamp: new Date().toISOString() // Include timezone info for proper server handling
       },
     });
 
@@ -48,6 +56,15 @@ export default function MessageInput() {
     dispatch(addMessage({ chatId, message: msg }));
     setInput('');
     setIsSending(false);
+  };
+
+  // Handle key press events for the input field
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // Send message on Enter key (but not with Shift+Enter which is for new lines)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent default to avoid form submission or line break
+      handleSend();
+    }
   };
 
   const sendTypingStatus = (isTyping: boolean) => {
@@ -110,8 +127,9 @@ export default function MessageInput() {
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown} // Add keydown handler
           className="flex-1 px-3 py-2 rounded border border-gray-300 outline-none text-sm"
-          placeholder="Type a message..."
+          placeholder="Type a message... (Press Enter to send)"
           disabled={isSending}
         />
         <button 

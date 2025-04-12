@@ -114,7 +114,36 @@ export default function UseSocket() {
       const messageId = message.message_id || crypto.randomUUID();
       const senderId = String(message.sender_id || '');
       const messageContent = message.message || '';
-      const timestamp = message.timestamp ? new Date(message.timestamp).getTime() : Date.now();
+      
+      // Enhanced timestamp parsing logic
+      let timestamp: number;
+      if (message.timestamp) {
+        try {
+          // Handle multiple possible timestamp formats
+          if (typeof message.timestamp === 'number') {
+            // Already a number (milliseconds)
+            timestamp = message.timestamp;
+          } else if (typeof message.timestamp === 'string') {
+            // ISO string or other format, create date and get time
+            const date = new Date(message.timestamp);
+            if (!isNaN(date.getTime())) {
+              timestamp = date.getTime();
+            } else {
+              // Fallback for non-standard formats
+              timestamp = Date.now();
+              console.warn(`Could not parse timestamp: ${message.timestamp}, using current time`);
+            }
+          } else {
+            // Unknown type, use current time
+            timestamp = Date.now();
+          }
+        } catch (e) {
+          console.error("Error parsing timestamp:", e, message.timestamp);
+          timestamp = Date.now();
+        }
+      } else {
+        timestamp = Date.now();
+      }
       
       if (!senderId || !messageContent) {
         console.error("Invalid message format:", message);
@@ -124,17 +153,17 @@ export default function UseSocket() {
       // In direct messages, the chatId is the id of the other person
       const chatId = senderId === userId ? String(message.receiver_id) : senderId;
       
-      console.log(`🔑 Chat ID determined: ${chatId}, Current active chat: ${activeChatId}`);
+      console.log(`🔑 Chat ID determined: ${chatId}, Timestamp: ${new Date(timestamp).toISOString()}`);
       
       dispatch(addMessage({
         chatId,
         message: {
           id: messageId,
-          server_message_id: messageId, // For multiplexer, these are the same
+          server_message_id: messageId,
           sender: senderId,
           content: messageContent,
           timestamp: timestamp,
-          delivered: true, // If we received it, it was delivered
+          delivered: true,
         }
       }));
       
