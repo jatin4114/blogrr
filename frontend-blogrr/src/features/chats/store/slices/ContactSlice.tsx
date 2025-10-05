@@ -1,3 +1,18 @@
+// Thunk to fetch unread counts
+export const fetchUnreadCounts = createAsyncThunk(
+  'contacts/fetchUnreadCounts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:8000/unread-count', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return response.data.by_sender;
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data || 'Failed to fetch unread counts');
+    }
+  }
+);
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -72,6 +87,13 @@ const contactsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       });
+    builder.addCase(fetchUnreadCounts.fulfilled, (state, action: PayloadAction<Record<string, number>>) => {
+      // Update unreadCount for each contact
+      const unreadBySender = action.payload;
+      state.list.forEach(contact => {
+        contact.unreadCount = unreadBySender[contact.id] || 0;
+      });
+    });
   },
 });
 export const { addContact } = contactsSlice.actions;

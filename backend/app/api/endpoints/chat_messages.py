@@ -84,12 +84,15 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, db: Session = D
                 
                 for msg in undelivered_messages:
                     logger.info(f"Sending undelivered message: {msg.id} from user {msg.sender_id}")
-                    await websocket.send_json({
+                    undelivered_payload = {
                         "type": "message",
                         "sender_id": msg.sender_id,
                         "message": msg.message,
                         "timestamp": msg.timestamp.isoformat() if msg.timestamp else None
-                    })
+                    }
+                    if hasattr(msg, "image") and msg.image:
+                        undelivered_payload["image"] = msg.image
+                    await websocket.send_json(undelivered_payload)
                 
                 # Mark messages as delivered only after successfully sending them
                 marked_count = mark_messages_as_delivered(db, user_id_int)
@@ -140,7 +143,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, db: Session = D
                         receiver_id=data["receiver_id"],
                         message=data["message"],
                         timestamp=current_time,
-                        delivered=False  # Explicitly set as undelivered
+                        delivered=False,  # Explicitly set as undelivered
+                        image=data.get("image")
                     )
                     
                     # Try Celery first, fall back to direct DB write
@@ -168,23 +172,29 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str, db: Session = D
                         message_id = stored_message.id if stored_message else None
                         logger.info(f"Message stored directly in DB with ID: {message_id}")
                     
-                    # Echo back for confirmation
-                    await websocket.send_json({
+                    # Echo back for confirmation (include image if present)
+                    confirmation_payload = {
                         "type": "confirmation",
                         "status": "sent", 
                         "message": data["message"],
                         "message_id": message_id
-                    })
+                    }
+                    if data.get("image"):
+                        confirmation_payload["image"] = data["image"]
+                    await websocket.send_json(confirmation_payload)
                     
                     # If receiver is connected, send the message and mark it as delivered
                     if manager.is_connected(data["receiver_id"]):
                         logger.info(f"Receiver {data['receiver_id']} is connected, sending message directly")
-                        success = await manager.send_message(data["receiver_id"], {
+                        receiver_payload = {
                             "type": "message",
                             "sender_id": data["sender_id"],
                             "message": data["message"],
                             "timestamp": data.get("timestamp") or datetime.utcnow().isoformat()
-                        })
+                        }
+                        if data.get("image"):
+                            receiver_payload["image"] = data["image"]
+                        success = await manager.send_message(data["receiver_id"], receiver_payload)
                         
                         if success and stored_message:
                             # If we have direct access to the message object and delivery succeeded,
@@ -324,15 +334,17 @@ async def get_chat_history(
     # Format the messages
     formatted_messages = []
     for msg in messages:
-        formatted_messages.append({
+        formatted = {
             "id": msg.id,
             "sender_id": msg.sender_id,
             "receiver_id": msg.receiver_id,
             "message": msg.message,
             "timestamp": msg.timestamp.isoformat(),
             "delivered": msg.delivered
-        })
-    
+        }
+        if hasattr(msg, "image") and msg.image:
+            formatted["image"] = msg.image
+        formatted_messages.append(formatted)
     return {"history": formatted_messages}
 
 # Add new endpoint to mark messages as read

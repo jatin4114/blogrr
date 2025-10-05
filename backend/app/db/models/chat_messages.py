@@ -10,6 +10,7 @@ class ChatMessage(Base):
     sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     receiver_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     message = Column(String, nullable=False)
+    image = Column(String, nullable=True)  # Store base64 image data
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     delivered = Column(Boolean, default=False, index=True)
     read = Column(Boolean, default=False, index=True)

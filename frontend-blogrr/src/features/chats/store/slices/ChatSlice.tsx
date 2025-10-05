@@ -9,6 +9,7 @@ interface Message {
   delivered?: boolean;
   read?: boolean;
   server_message_id?: string; // For tracking messages using server-assigned IDs
+  image?: string; // base64 image data
 }
 
 interface ChatState {
@@ -42,7 +43,17 @@ export const fetchChatHistory = createAsyncThunk(
       console.log("🔄 Chat history API response:", response.data);
       
       // Map the response data to our expected format
-      const messages = response.data?.messages?.map((msg: any) => ({
+      interface ApiMessage {
+        id?: string;
+        sender_id?: string;
+        content?: string;
+        message?: string;
+        timestamp?: number;
+        delivered?: boolean;
+        read?: boolean;
+      }
+
+  const messages = response.data?.history?.map((msg: ApiMessage): Message => ({
         id: msg.id || crypto.randomUUID(),
         sender: String(msg.sender_id || ''),
         content: msg.content || msg.message || '',

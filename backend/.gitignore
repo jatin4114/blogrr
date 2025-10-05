@@ -22,3 +22,9 @@ build/
 *.ntvs*
 *.njsproj
 *.sln
+
+__pycache__/
+*.pyc
+__pycache__
+pycache
+.pyc

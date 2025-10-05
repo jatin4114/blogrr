@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import MainLayout from 'layouts/MainLayout';
+import MainLayout from '../../../layouts/MainLayout';
 import BlogsList from '../components/BlogsList';
 import { setView } from '../store/blogSlice';
 import { AppDispatch } from 'store/store';

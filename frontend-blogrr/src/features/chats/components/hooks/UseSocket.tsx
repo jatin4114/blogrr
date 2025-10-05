@@ -164,6 +164,7 @@ export default function UseSocket() {
           content: messageContent,
           timestamp: timestamp,
           delivered: true,
+          image: message.image || undefined,
         }
       }));
       

@@ -7,18 +7,14 @@ import { fetchChatHistory, markMessagesAsRead } from '@/features/chats/store/sli
 // Enhanced helper for formatting message timestamps with timezone support
 const formatMessageTime = (timestamp: number) => {
   if (!timestamp) return '';
-  
   try {
     const messageDate = new Date(timestamp);
-    
-    // Check if the date is valid
     if (isNaN(messageDate.getTime())) {
       console.error("Invalid timestamp:", timestamp);
       return '';
     }
-    
-    const now = new Date();
-    const yesterday = new Date(now);
+    // Always show local time
+    return messageDate.toLocaleString();
     yesterday.setDate(yesterday.getDate() - 1);
     
     // Check if the date is today
@@ -92,7 +88,7 @@ export default function MessagesContainer() {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [sortedMessages]);
 
   if (!activeChatId) {
     return (
@@ -110,9 +106,9 @@ export default function MessagesContainer() {
     );
   }
 
-  // Filter out invalid or empty messages
+  // Filter out invalid messages, but allow image-only messages
   const validMessages = messages.filter(
-    (msg) => msg && msg.id && msg.content && msg.sender
+    (msg) => msg && msg.id && msg.sender && (msg.content || msg.image)
   );
 
   // Sort messages by timestamp to ensure proper ordering
@@ -122,16 +118,13 @@ export default function MessagesContainer() {
     <div className="flex-1 overflow-y-auto px-4 py-2 flex flex-col gap-2">
       {sortedMessages.map((msg) => {
         const isSentByMe = msg.sender === userId;
-        
-        // Get message status with proper defaults to prevent undefined errors
-        const status = messageStatus[msg.id] 
-          ? messageStatus[msg.id] 
-          : { 
-              delivered: !!msg.delivered, 
-              read: !!msg.read, 
-              error: undefined 
+        const status = messageStatus[msg.id]
+          ? messageStatus[msg.id]
+          : {
+              delivered: !!msg.delivered,
+              read: !!msg.read,
+              error: undefined
             };
-        
         return (
           <div
             key={msg.id}
@@ -141,14 +134,14 @@ export default function MessagesContainer() {
                 : 'self-start bg-gray-200 text-gray-900'
             }`}
           >
+            {/* Render image if present */}
+            {msg.image && (
+              <img src={msg.image} alt="attachment" className="mb-2 max-w-full max-h-48 rounded shadow" />
+            )}
             {msg.content}
-            
-            {/* Add timestamp display */}
             <div className="text-xs opacity-70 mt-1">
               {formatMessageTime(msg.timestamp)}
             </div>
-            
-            {/* Show delivery status for sent messages, with null checks */}
             {isSentByMe && (
               <div className="text-xs opacity-70 text-right">
                 {status && status.error ? (

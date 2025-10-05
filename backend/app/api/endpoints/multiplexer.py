@@ -767,7 +767,8 @@ async def handle_direct_message(message: Dict, user_id: int, db: Session, websoc
                 "client_message_id": client_message_id,
                 "sender_id": user_id,
                 "message": message_text,
-                "timestamp": TimeUtil.to_iso(current_time)
+                "timestamp": TimeUtil.to_iso(current_time),
+                "image": getattr(stored_message, "image", None)
             })
             
             # Log delivery status

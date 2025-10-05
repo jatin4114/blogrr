@@ -8,6 +8,7 @@ class ChatMessageSchema(BaseModel):
     timestamp: datetime | None = None
     delivered: bool = False
     read: bool = False
+    image: str | None = None
 
     class Config:
         orm_mode = True
